@@ -1,0 +1,23 @@
+--cpu Cortex-M3
+"nfc_module\startup_stm32f107xc.o"
+"nfc_module\main.o"
+"nfc_module\stm32f1xx_it.o"
+"nfc_module\stm32f1xx_hal_msp.o"
+"nfc_module\system_stm32f1xx.o"
+"nfc_module\stm32f1xx_hal_gpio_ex.o"
+"nfc_module\stm32f1xx_hal_tim.o"
+"nfc_module\stm32f1xx_hal_tim_ex.o"
+"nfc_module\stm32f1xx_hal.o"
+"nfc_module\stm32f1xx_hal_rcc.o"
+"nfc_module\stm32f1xx_hal_rcc_ex.o"
+"nfc_module\stm32f1xx_hal_gpio.o"
+"nfc_module\stm32f1xx_hal_dma.o"
+"nfc_module\stm32f1xx_hal_cortex.o"
+"nfc_module\stm32f1xx_hal_pwr.o"
+"nfc_module\stm32f1xx_hal_flash.o"
+"nfc_module\stm32f1xx_hal_flash_ex.o"
+"nfc_module\stm32f1xx_hal_exti.o"
+--library_type=microlib --strict --scatter "NFC_Module\NFC_Module.sct"
+--summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list "NFC_Module.map" -o NFC_Module\NFC_Module.axf

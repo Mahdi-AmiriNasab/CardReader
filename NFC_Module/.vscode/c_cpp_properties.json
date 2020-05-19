@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "intelliSenseMode": "msvc-x64",
+            "includePath": [
+                "${default}",
+                "${workspaceFolder}/Drivers/STM32F1xx_HAL_Driver/Inc",
+                "${workspaceFolder}/Drivers/CMSIS/Device/ST/STM32F1xx/Include"
+            ],
+            "browse": {
+                "path": [
+                    "C:\\Users\\ara22\\Desktop\\CardReader\\NFC_Module\\MDK-ARM"
+                ]
+            }
+        }
+    ],
+    "version": 4
+}
