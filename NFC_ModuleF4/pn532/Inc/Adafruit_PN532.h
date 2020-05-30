@@ -39,6 +39,8 @@
 #include <Adafruit_SPIDevice.h>
 #else
 #include "main.h"
+#include <defines.h>
+
 #define SPI_SCT 		hspi1
 
 	 

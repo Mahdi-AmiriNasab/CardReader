@@ -44,7 +44,7 @@
              uint8_t mifareultralight_ReadPage (uint8_t page, uint8_t * buffer)
 */
 /**************************************************************************/
-#if 0 // cahange to 1 to activate 
+
 
 
 #include "Adafruit_PN532.h"
@@ -62,20 +62,26 @@
 #include <SPI.h>
 
 #else
+/***********Includes***********/
+#include <Wire_a.h>
+
+
+/******Exernal variables*******/
 extern SPI_HandleTypeDef SPI_SCT;
-DBG Ser;
+
+/*********Definitions**********/
+#ifndef WIRE
+	#define WIRE Wire
 #endif
 
-#ifndef  __string_h
-#include "string.h"
-#endif
-
-#ifdef  USE_HAL_DRIVER
+#define ARDUINO 100
 #define F 			(const uint8_t *)
 #define HEX 		(const uint8_t *) 1
 #define delay(milisec) HAL_Delay(milisec)
 
 
+
+/**********Classes*************/
 void DBG::print (const uint8_t *str, const uint8_t  type)
 {}
 void DBG::print (const uint8_t *str)
@@ -89,9 +95,12 @@ void DBG::println (const uint8_t *str)
 void DBG::println (void)
 {}
 	
-	
+DBG Ser;
 #endif
 
+#ifndef  __string_h
+#include "string.h"
+#endif
 
 
 byte pn532ack[] = {0x00, 0x00, 0xFF, 0x00, 0xFF, 0x00};
@@ -205,12 +214,12 @@ Adafruit_PN532::Adafruit_PN532(uint16_t irq, uint16_t reset)
     @param  ss        SPI chip select pin (CS/SSEL)
 */
 /**************************************************************************/
-Adafruit_PN532::Adafruit_PN532(uint8_t ss) {
-#ifndef USE_HAL_DRIVER
-  spi_dev =
-      new Adafruit_SPIDevice(ss, 1000000, SPI_BITORDER_LSBFIRST, SPI_MODE0);
-#endif
-}
+//Adafruit_PN532::Adafruit_PN532(uint8_t ss) {
+//#ifndef USE_HAL_DRIVER
+//  spi_dev =
+//      new Adafruit_SPIDevice(ss, 1000000, SPI_BITORDER_LSBFIRST, SPI_MODE0);
+//#endif
+//}
 
 /**************************************************************************/
 /*!
@@ -232,6 +241,7 @@ bool Adafruit_PN532::begin() {
 			return true;
     
    #else 
+	#ifndef USE_HAL_DRIVER
     // I2C initialization.
     WIRE.begin();
 
@@ -243,6 +253,21 @@ bool Adafruit_PN532::begin() {
     delay(
         10); // Small delay required before taking other actions after reset.
              // See timing diagram on page 209 of the datasheet, section 12.23.
+	 #else
+	  // I2C initialization.
+    WIRE.begin();
+
+    // Reset the PN532
+		HAL_GPIO_WritePin(reset_port, reset_pin, GPIO_PIN_SET);
+		HAL_Delay(1);
+		HAL_GPIO_WritePin(reset_port, reset_pin, GPIO_PIN_RESET);
+		HAL_Delay(400);
+		HAL_GPIO_WritePin(reset_port, reset_pin, GPIO_PIN_SET);
+		HAL_Delay(10);// Small delay required before taking other actions after reset.
+									// See timing diagram on page 209 of the datasheet, section 12.23.
+		
+			return true;
+	 #endif
 	 #endif
 
 }
@@ -1533,11 +1558,15 @@ bool Adafruit_PN532::readack() {
     readdata(ackbuff, 6);
   }
 #else
+	#ifdef USE_SPI
 	uint8_t cmd = PN532_SPI_DATAREAD;
 	CS_LOW;
 	HAL_SPI_Transmit(&SPI_SCT, &cmd, 1,100);
 	HAL_SPI_Receive(&SPI_SCT, ackbuff, 6,100);
 	CS_HIGH;
+	#else
+	readdata(ackbuff, 6);
+	#endif
 #endif
   return (0 == memcmp((char *)ackbuff, (char *)pn532ack, 6));
 }
@@ -1566,9 +1595,16 @@ bool Adafruit_PN532::isready() {
 	return reply == PN532_SPI_READY;
 		#endif
   #else 
+	#ifdef USE_HAL_DRIVER	
+		// I2C check if status is ready by IRQ line being pulled low.
+    uint8_t x = HAL_GPIO_ReadPin(irq_port, irq_pin);
+    return x == 0;
+	#else
     // I2C check if status is ready by IRQ line being pulled low.
     uint8_t x = digitalRead(_irq);
     return x == 0;
+	#endif
+	
 	#endif
 }
 
@@ -1872,5 +1908,3 @@ void Adafruit_PN532::writecommand(uint8_t *cmd, uint8_t cmdlen) {
 #endif
   
 }
-
-#endif

@@ -8,6 +8,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "usbd_cdc_if.h"
+#include "Adafruit_PN532.h"
+#include "stdio.h"
 //#include "Adafruit_PN532.h"
 
 /* USER CODE END Includes */
@@ -92,7 +94,7 @@ int main(void)
 //	send[8] = 0x2a;
 //	send[9] = 0x00;
 		
-		
+		Adafruit_PN532 rfid(irq_pin, reset_pin);
 		while(!HAL_GPIO_ReadPin(Button_Blue_GPIO_Port, Button_Blue_Pin));
 		//HAL_GPIO_WritePin(GPIOD , GPIO_PIN_15, GPIO_PIN_SET);
 
@@ -103,74 +105,48 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 		
-//		if(reader.begin())
-//		{
-//			CDC_Transmit_FS((uint8_t *)"Connenction established" ,23);
-//			HAL_GPIO_WritePin(GPIOD , GPIO_PIN_13, GPIO_PIN_SET);
-//		}
-//		else
-//		{
-//			HAL_GPIO_WritePin(GPIOD , GPIO_PIN_12, GPIO_PIN_SET);
-//		}
 
 		
-	if(HAL_I2C_Master_Transmit(&hi2c1, 0X48, send, 9, 100) == HAL_OK)
-	{
-		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);
-		HAL_Delay(100);
-		HAL_I2C_Master_Receive(&hi2c1, 0x49, receive, 10, 100);
-	}
-	else
-	{
-		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);
-	}
-	
-
-	
-
-//	CDC_Transmit_FS((uint8_t *)"ACK Packet:", 11); 
-//	for(uint8_t i = 0; i < 6; i++)
+//	if(HAL_I2C_Master_Transmit(&hi2c1, 0X48, send, 9, 100) == HAL_OK)
 //	{
-//		uint8_t show[10];
-//		sprintf((char* )show, "0x%02X ",receive[i]); 
-//		if(receive[i] == 0)
-//		{
-//			HAL_GPIO_WritePin(GPIOD , GPIO_PIN_12, GPIO_PIN_SET);
-//			HAL_Delay(50);
-//		}
-//		HAL_GPIO_WritePin(GPIOD , GPIO_PIN_12, GPIO_PIN_RESET);
-//		
-//		CDC_Transmit_FS(show, strlen((char *)show));
+//		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);
 //		HAL_Delay(100);
+//		HAL_I2C_Master_Receive(&hi2c1, 0x49, receive, 10, 100);
 //	}
-//	CDC_Transmit_FS((uint8_t *)"\n", 1);
-//	
-//	
-//	CDC_Transmit_FS((uint8_t *)"Received frame is:", 18);   
-//	
-//	for(uint8_t i = 0; i < 10; i++)
+//	else
 //	{
-//		uint8_t show[10];
-//		sprintf((char* )show, "0x%02X ",receive[i]); 
-//		if(receive[i] == 0)
-//		{
-//			HAL_GPIO_WritePin(GPIOD , GPIO_PIN_12, GPIO_PIN_SET);
-//			HAL_Delay(50);
-//		}
-//		HAL_GPIO_WritePin(GPIOD , GPIO_PIN_12, GPIO_PIN_RESET);
-//		
-//		CDC_Transmit_FS(show, strlen((char *)show));
-//		HAL_Delay(100);
+//		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);
 //	}
-//	CDC_Transmit_FS((uint8_t *)"\n", 1);
 //	
+		
+//	if(HAL_I2C_Master_Receive(&hi2c1, 0x49, receive, 10, 100) == HAL_OK)
+//	{
+//		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);
+//		HAL_Delay(100);
+//		//HAL_I2C_Master_Receive(&hi2c1, 0x49, receive, 10, 100);
+//	}
+//	else
+//	{
+//		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);
+//	}
+//	
+uint32_t version_number = 0;
+
+version_number = rfid.getFirmwareVersion();
+if( 0x32010607 == 	version_number)
+	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);
+uint8_t lcd[50];
+sprintf((char *)lcd , "Firmware version is: 0x%X\n",version_number);
+	
+CDC_Transmit_FS(lcd ,strlen((const char *)lcd));
+
 
 		HAL_Delay(500);
 		HAL_GPIO_WritePin(GPIOD , GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
 		while(!HAL_GPIO_ReadPin(Button_Blue_GPIO_Port, Button_Blue_Pin));
 
     
-	}
+	}	
   /* USER CODE END 3 */
 }
 
@@ -347,6 +323,7 @@ void Error_Handler(void)
   /* USER CODE BEGIN Error_Handler_Debug */
   /* USER CODE END Error_Handler_Debug */
 }
+
 
 #ifdef  USE_FULL_ASSERT
 /**

@@ -1021,7 +1021,7 @@ HAL_StatusTypeDef HAL_I2C_UnRegisterAddrCallback(I2C_HandleTypeDef *hi2c)
   * @param  Timeout Timeout duration
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_I2C_Master_Transmit(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t *pData, uint16_t Size, uint32_t Timeout)
+HAL_StatusTypeDef HAL_I2C_Master_Transmit(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t *pData, uint16_t Size, uint8_t SendStop, uint32_t Timeout)
 {
   /* Init tickstart for timeout management*/
   uint32_t tickstart = HAL_GetTick();
@@ -1074,7 +1074,7 @@ HAL_StatusTypeDef HAL_I2C_Master_Transmit(I2C_HandleTypeDef *hi2c, uint16_t DevA
         if (hi2c->ErrorCode == HAL_I2C_ERROR_AF)
         {
           /* Generate Stop */
-          SET_BIT(hi2c->Instance->CR1, I2C_CR1_STOP);
+					SET_BIT(hi2c->Instance->CR1, I2C_CR1_STOP);
         }
         return HAL_ERROR;
       }
@@ -1108,14 +1108,15 @@ HAL_StatusTypeDef HAL_I2C_Master_Transmit(I2C_HandleTypeDef *hi2c, uint16_t DevA
         if (hi2c->ErrorCode == HAL_I2C_ERROR_AF)
         {
           /* Generate Stop */
-          SET_BIT(hi2c->Instance->CR1, I2C_CR1_STOP);
+					SET_BIT(hi2c->Instance->CR1, I2C_CR1_STOP);
         }
         return HAL_ERROR;
       }
     }
 
     /* Generate Stop */
-    SET_BIT(hi2c->Instance->CR1, I2C_CR1_STOP);
+		if(SendStop)
+			SET_BIT(hi2c->Instance->CR1, I2C_CR1_STOP);
 
     hi2c->State = HAL_I2C_STATE_READY;
     hi2c->Mode = HAL_I2C_MODE_NONE;
@@ -1142,7 +1143,7 @@ HAL_StatusTypeDef HAL_I2C_Master_Transmit(I2C_HandleTypeDef *hi2c, uint16_t DevA
   * @param  Timeout Timeout duration
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_I2C_Master_Receive(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t *pData, uint16_t Size, uint32_t Timeout)
+HAL_StatusTypeDef HAL_I2C_Master_Receive(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t *pData, uint16_t Size, uint8_t SendStop,uint32_t Timeout)
 {
   /* Init tickstart for timeout management*/
   uint32_t tickstart = HAL_GetTick();
@@ -1190,7 +1191,7 @@ HAL_StatusTypeDef HAL_I2C_Master_Receive(I2C_HandleTypeDef *hi2c, uint16_t DevAd
       __HAL_I2C_CLEAR_ADDRFLAG(hi2c);
 
       /* Generate Stop */
-      SET_BIT(hi2c->Instance->CR1, I2C_CR1_STOP);
+			SET_BIT(hi2c->Instance->CR1, I2C_CR1_STOP);
     }
     else if (hi2c->XferSize == 1U)
     {
@@ -1201,7 +1202,8 @@ HAL_StatusTypeDef HAL_I2C_Master_Receive(I2C_HandleTypeDef *hi2c, uint16_t DevAd
       __HAL_I2C_CLEAR_ADDRFLAG(hi2c);
 
       /* Generate Stop */
-      SET_BIT(hi2c->Instance->CR1, I2C_CR1_STOP);
+			if(SendStop)
+				SET_BIT(hi2c->Instance->CR1, I2C_CR1_STOP);
     }
     else if (hi2c->XferSize == 2U)
     {
@@ -1256,7 +1258,8 @@ HAL_StatusTypeDef HAL_I2C_Master_Receive(I2C_HandleTypeDef *hi2c, uint16_t DevAd
           }
 
           /* Generate Stop */
-          SET_BIT(hi2c->Instance->CR1, I2C_CR1_STOP);
+					if(SendStop)
+						SET_BIT(hi2c->Instance->CR1, I2C_CR1_STOP);
 
           /* Read data from DR */
           *hi2c->pBuffPtr = (uint8_t)hi2c->Instance->DR;
@@ -1307,7 +1310,8 @@ HAL_StatusTypeDef HAL_I2C_Master_Receive(I2C_HandleTypeDef *hi2c, uint16_t DevAd
           }
 
           /* Generate Stop */
-          SET_BIT(hi2c->Instance->CR1, I2C_CR1_STOP);
+					if(SendStop)
+						SET_BIT(hi2c->Instance->CR1, I2C_CR1_STOP);
 
           /* Read data from DR */
           *hi2c->pBuffPtr = (uint8_t)hi2c->Instance->DR;

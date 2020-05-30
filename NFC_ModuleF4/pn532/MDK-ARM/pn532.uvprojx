@@ -370,7 +370,7 @@
             <TextAddressRange>0x08000000</TextAddressRange>
             <DataAddressRange>0x20000000</DataAddressRange>
             <pXoBase></pXoBase>
-            <ScatterFile></ScatterFile>
+            <ScatterFile>pn532\pn532.sct</ScatterFile>
             <IncludeLibs></IncludeLibs>
             <IncludeLibsPath></IncludeLibsPath>
             <Misc></Misc>
@@ -397,6 +397,16 @@
               <FileName>Adafruit_PN532.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\Src\Adafruit_PN532.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>Wire_a.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\Src\Wire_a.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>twi_a.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\Src\twi_a.cpp</FilePath>
             </File>
           </Files>
         </Group>
