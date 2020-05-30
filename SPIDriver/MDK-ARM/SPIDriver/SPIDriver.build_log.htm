@@ -1,0 +1,123 @@
+<html>
+<body>
+<pre>
+<h1>µVision Build Log</h1>
+<h2>Tool Versions:</h2>
+IDE-Version: µVision V5.28.0.0
+Copyright (C) 2019 ARM Ltd and ARM Germany GmbH. All rights reserved.
+License Information: Mahdi AmiriNasab, ARA, LIC=65IDY-IRK0G-T3FMI-T3MW7-LL22T-N3C3J
+ 
+Tool Versions:
+Toolchain:       MDK-ARM Plus  Version: 5.28.0.0
+Toolchain Path:  C:\Keil_v5\ARM\ARMCC\Bin
+C Compiler:      Armcc.exe V5.06 update 6 (build 750)
+Assembler:       Armasm.exe V5.06 update 6 (build 750)
+Linker/Locator:  ArmLink.exe V5.06 update 6 (build 750)
+Library Manager: ArmAr.exe V5.06 update 6 (build 750)
+Hex Converter:   FromElf.exe V5.06 update 6 (build 750)
+CPU DLL:         SARMCM3.DLL V5.28.0.0
+Dialog DLL:      DCM.DLL V1.17.3.0
+Target DLL:      STLink\ST-LINKIII-KEIL_SWO.dll V3.0.6.0
+Dialog DLL:      TCM.DLL V1.36.2.0
+ 
+<h2>Project:</h2>
+C:\Users\ara22\Desktop\CardReader\SPIDriver\MDK-ARM\SPIDriver.uvprojx
+Project File Date:  05/26/2020
+
+<h2>Output:</h2>
+*** Using Compiler 'V5.06 update 6 (build 750)', folder: 'C:\Keil_v5\ARM\ARMCC\Bin'
+Build target 'SPIDriver'
+compiling SPI.cpp...
+../Inc/SPI.h(76): error:  #20: identifier "__builtin_constant_p" is undefined
+      if (__builtin_constant_p(clock)) {
+../Inc/SPI.h(114): error:  #20: identifier "__builtin_constant_p" is undefined
+      if (__builtin_constant_p(clock)) {
+../Inc/SPI.h(115): error:  #20: identifier "F_CPU" is undefined
+        if (clock >= F_CPU / 2) {
+../Inc/SPI.h(131): error:  #20: identifier "F_CPU" is undefined
+        uint32_t clockSetting = F_CPU / 2;
+../Inc/SPI.h(147): error:  #20: identifier "SPE" is undefined
+      spcr = _BV(SPE) | _BV(MSTR) | ((bitOrder == LSBFIRST) ? _BV(DORD) : 0) |
+../Inc/SPI.h(147): error:  #20: identifier "_BV" is undefined
+      spcr = _BV(SPE) | _BV(MSTR) | ((bitOrder == LSBFIRST) ? _BV(DORD) : 0) |
+../Inc/SPI.h(147): error:  #20: identifier "MSTR" is undefined
+      spcr = _BV(SPE) | _BV(MSTR) | ((bitOrder == LSBFIRST) ? _BV(DORD) : 0) |
+../Inc/SPI.h(147): error:  #20: identifier "DORD" is undefined
+      spcr = _BV(SPE) | _BV(MSTR) | ((bitOrder == LSBFIRST) ? _BV(DORD) : 0) |
+../Inc/SPI.h(181): error:  #20: identifier "SREG" is undefined
+        uint8_t sreg = SREG;
+../Inc/SPI.h(182): error:  #20: identifier "noInterrupts" is undefined
+        noInterrupts();
+../Inc/SPI.h(204): error:  #20: identifier "SPCR" is undefined
+      SPCR = settings.spcr;
+../Inc/SPI.h(205): error:  #20: identifier "SPSR" is undefined
+      SPSR = settings.spsr;
+../Inc/SPI.h(210): error:  #20: identifier "SPDR" is undefined
+      SPDR = data;
+../Inc/SPI.h(218): error:  #20: identifier "SPSR" is undefined
+      while (!(SPSR & _BV(SPIF))) ; // wait
+../Inc/SPI.h(218): error:  #20: identifier "SPIF" is undefined
+      while (!(SPSR & _BV(SPIF))) ; // wait
+../Inc/SPI.h(218): error:  #20: identifier "_BV" is undefined
+      while (!(SPSR & _BV(SPIF))) ; // wait
+../Inc/SPI.h(222): error:  #3093: anonymous structs are only supported in --gnu mode, or when enabled with #pragma anon_unions
+      union { uint16_t val; struct { uint8_t lsb; uint8_t msb; }; } in, out;
+../Inc/SPI.h(224): error:  #20: identifier "SPCR" is undefined
+      if (!(SPCR & _BV(DORD))) {
+../Inc/SPI.h(224): error:  #20: identifier "DORD" is undefined
+      if (!(SPCR & _BV(DORD))) {
+../Inc/SPI.h(224): error:  #20: identifier "_BV" is undefined
+      if (!(SPCR & _BV(DORD))) {
+../Inc/SPI.h(225): error:  #20: identifier "SPDR" is undefined
+        SPDR = in.msb;
+../Inc/SPI.h(226): error:  #67: expected a "}"
+        asm volatile("nop"); // See transfer(uint8_t) function
+../Inc/SPI.h(226): warning:  #940-D: missing return statement at end of non-void function "SPIClass::transfer16" 
+        asm volatile("nop"); // See transfer(uint8_t) function
+../Inc/SPI.h(222): warning:  #177-D: variable "out"  was declared but never referenced
+      union { uint16_t val; struct { uint8_t lsb; uint8_t msb; }; } in, out;
+../Inc/SPI.h(226): error:  #67: expected a "}"
+        asm volatile("nop"); // See transfer(uint8_t) function
+../Inc/SPI.h(248): error:  #20: identifier "SPDR" is undefined
+      SPDR = *p;
+../Inc/SPI.h(251): error:  #20: identifier "SPSR" is undefined
+        while (!(SPSR & _BV(SPIF))) ;
+../Inc/SPI.h(251): error:  #20: identifier "SPIF" is undefined
+        while (!(SPSR & _BV(SPIF))) ;
+../Inc/SPI.h(251): error:  #20: identifier "_BV" is undefined
+        while (!(SPSR & _BV(SPIF))) ;
+../Inc/SPI.h(256): error:  #20: identifier "SPSR" is undefined
+      while (!(SPSR & _BV(SPIF))) ;
+../Inc/SPI.h(256): error:  #20: identifier "SPIF" is undefined
+      while (!(SPSR & _BV(SPIF))) ;
+../Inc/SPI.h(256): error:  #20: identifier "_BV" is undefined
+      while (!(SPSR & _BV(SPIF))) ;
+..\Src\SPI.cpp: 2 warnings, 30 errors
+"SPIDriver\SPIDriver.axf" - 30 Error(s), 2 Warning(s).
+
+<h2>Software Packages used:</h2>
+
+Package Vendor: ARM
+                http://www.keil.com/pack/ARM.CMSIS.5.5.1.pack
+                ARM.CMSIS.5.5.1
+                CMSIS (Cortex Microcontroller Software Interface Standard)
+   * Component: CORE Version: 5.2.0
+
+Package Vendor: Keil
+                http://www.keil.com/pack/Keil.STM32F4xx_DFP.2.14.0.pack
+                Keil.STM32F4xx_DFP.2.14.0
+                STMicroelectronics STM32F4 Series Device Support, Drivers and Examples
+
+<h2>Collection of Component include folders:</h2>
+  .\RTE\_SPIDriver
+  C:\Users\ara22\AppData\Local\Arm\Packs\ARM\CMSIS\5.5.1\CMSIS\Core\Include
+  C:\Users\ara22\AppData\Local\Arm\Packs\Keil\STM32F4xx_DFP\2.14.0\Drivers\CMSIS\Device\ST\STM32F4xx\Include
+
+<h2>Collection of Component Files used:</h2>
+
+   * Component: ARM::CMSIS:CORE:5.2.0
+Target not created.
+Build Time Elapsed:  00:00:02
+</pre>
+</body>
+</html>
