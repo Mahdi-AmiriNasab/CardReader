@@ -44,6 +44,9 @@
              uint8_t mifareultralight_ReadPage (uint8_t page, uint8_t * buffer)
 */
 /**************************************************************************/
+#if 0 // cahange to 1 to activate 
+
+
 #include "Adafruit_PN532.h"
 
 #ifndef  USE_HAL_DRIVER
@@ -150,8 +153,8 @@ static inline uint8_t i2c_recv(void) {
     @param  ss        SPI chip select pin (CS/SSEL)
 */
 /**************************************************************************/
-Adafruit_PN532::Adafruit_PN532(uint8_t clk, uint8_t miso, uint8_t mosi,
-                               uint8_t ss) {
+Adafruit_PN532::Adafruit_PN532(uint16_t clk, uint16_t miso, uint16_t mosi,
+                               uint16_t ss) {
  _irq = -1 ,_reset = -1;
 																 
  #ifdef USE_HAL_DRIVER
@@ -187,7 +190,7 @@ Adafruit_PN532::Adafruit_PN532(uint8_t clk, uint8_t miso, uint8_t mosi,
     @param  reset     Location of the RSTPD_N pin
 */
 /**************************************************************************/
-Adafruit_PN532::Adafruit_PN532(uint8_t irq, uint8_t reset)
+Adafruit_PN532::Adafruit_PN532(uint16_t irq, uint16_t reset)
     : _irq(irq), _reset(reset) {
  #ifndef USE_HAL_DRIVER
   pinMode(_irq, INPUT);
@@ -1869,3 +1872,5 @@ void Adafruit_PN532::writecommand(uint8_t *cmd, uint8_t cmdlen) {
 #endif
   
 }
+
+#endif

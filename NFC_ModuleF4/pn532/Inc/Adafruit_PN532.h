@@ -186,10 +186,10 @@ class DBG
 
 class Adafruit_PN532 {
 public:
-  Adafruit_PN532(uint8_t clk, uint8_t miso, uint8_t mosi,
-                 uint8_t ss);                 // Software SPI
-  Adafruit_PN532(uint8_t irq, uint8_t reset); // Hardware I2C
-  Adafruit_PN532(uint8_t ss);                 // Hardware SPI
+  Adafruit_PN532(uint16_t clk, uint16_t miso, uint16_t mosi,
+                 uint16_t ss);                 // Software SPI
+  Adafruit_PN532(uint16_t irq, uint16_t reset); // Hardware I2C
+  Adafruit_PN532(uint16_t ss);                 // Hardware SPI
   bool begin(void);
 
   // Generic PN532 functions
@@ -240,7 +240,7 @@ public:
 
 private:
   
-  int8_t _irq , _reset ;
+  int16_t _irq , _reset ;
 	int8_t _uid[7];      // ISO14443A uid
   int8_t _uidLen;      // uid len
   int8_t _key[6];      // Mifare Classic key

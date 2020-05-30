@@ -8,7 +8,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "usbd_cdc_if.h"
-#include "Adafruit_PN532.h"
+//#include "Adafruit_PN532.h"
 
 /* USER CODE END Includes */
 
@@ -25,6 +25,8 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+I2C_HandleTypeDef hi2c1;
+
 SPI_HandleTypeDef hspi1;
 
 /* USER CODE BEGIN PV */
@@ -34,6 +36,7 @@ SPI_HandleTypeDef hspi1;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_SPI1_Init(void);
+static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
 /* USER CODE END PFP */
 
@@ -69,19 +72,36 @@ int main(void)
   MX_GPIO_Init();
   MX_SPI1_Init();
   MX_USB_DEVICE_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+	uint8_t send[100] = {0x00, 0x00, 0xff, 0x01, 0xff, 0xd4, 0x02, 0x2a, 0x00}
+	, receive[100];
+		
+//	send[0] = 0x01;
+//	send[1] = 0x00;
+//	send[2] = 0x00;
+//	send[3] = 0xff;
+//	send[4] = 0x01;
+//	send[5] = 0xff;
+//	send[6] = 0xd4;
+//	send[7] = 0x02;
+//	send[8] = 0x2a;
+//	send[9] = 0x00;
+		
+		
 		while(!HAL_GPIO_ReadPin(Button_Blue_GPIO_Port, Button_Blue_Pin));
-		Adafruit_PN532 reader(1);
-		CDC_Transmit_FS((uint8_t *)"hello\n", 6);   
-		HAL_Delay(100);
-	HAL_GPIO_WritePin(GPIOD , GPIO_PIN_15, GPIO_PIN_SET);
+		//HAL_GPIO_WritePin(GPIOD , GPIO_PIN_15, GPIO_PIN_SET);
+
+	
 	while(1)
 	{
     /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
 		
 //		if(reader.begin())
 //		{
@@ -92,97 +112,64 @@ int main(void)
 //		{
 //			HAL_GPIO_WritePin(GPIOD , GPIO_PIN_12, GPIO_PIN_SET);
 //		}
-	uint8_t send[100] = {0x00, 0x00, 0xff, 0x01, 0xff, 0xd4, 0x02, 0x2a, 0x00}
-		, receive[100];
-		
 
-	CS_LOW;
-	send[0] = 0x01;
-	send[1] = 0x00;
-	send[2] = 0x00;
-	send[3] = 0xff;
-	send[4] = 0x01;
-	send[5] = 0xff;
-	send[6] = 0xd4;
-	send[7] = 0x02;
-	send[8] = 0x2a;
-	send[9] = 0x00;
-	
-	HAL_SPI_Transmit(&hspi1,send, 9, 1000);
-	
-	CS_HIGH;
-	HAL_Delay(100);
-	
-	CS_LOW;
-	
-	send[0] = 0x02;
-	HAL_SPI_Transmit(&hspi1,send, 1, 1000);
-	HAL_Delay(10);
-	HAL_SPI_Receive(&hspi1, receive ,1, 1000);	
-	
-	CS_HIGH;
-	
-	HAL_Delay(500);
-	
-	CS_LOW;
-	
-	send[0] = 0x03;
-	HAL_SPI_Transmit(&hspi1,send, 1, 1000);
-	HAL_Delay(100);
-	HAL_SPI_Receive(&hspi1, receive ,6, 1000);	
-	
-	CS_HIGH;
-	
-	CDC_Transmit_FS((uint8_t *)"ACK Packet:", 11); 
-	for(uint8_t i = 0; i < 6; i++)
+		
+	if(HAL_I2C_Master_Transmit(&hi2c1, 0X48, send, 9, 100) == HAL_OK)
 	{
-		uint8_t show[10];
-		sprintf((char* )show, "0x%02X ",receive[i]); 
-		if(receive[i] == 0)
-		{
-			HAL_GPIO_WritePin(GPIOD , GPIO_PIN_12, GPIO_PIN_SET);
-			HAL_Delay(50);
-		}
-		HAL_GPIO_WritePin(GPIOD , GPIO_PIN_12, GPIO_PIN_RESET);
-		
-		CDC_Transmit_FS(show, strlen((char *)show));
+		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);
 		HAL_Delay(100);
+		HAL_I2C_Master_Receive(&hi2c1, 0x49, receive, 10, 100);
 	}
-	CDC_Transmit_FS((uint8_t *)"\n", 1);
-	
-	
-	CDC_Transmit_FS((uint8_t *)"Received frame is:", 18);   
-	
-	for(uint8_t i = 0; i < 10; i++)
+	else
 	{
-		uint8_t show[10];
-		sprintf((char* )show, "0x%02X ",receive[i]); 
-		if(receive[i] == 0)
-		{
-			HAL_GPIO_WritePin(GPIOD , GPIO_PIN_12, GPIO_PIN_SET);
-			HAL_Delay(50);
-		}
-		HAL_GPIO_WritePin(GPIOD , GPIO_PIN_12, GPIO_PIN_RESET);
-		
-		CDC_Transmit_FS(show, strlen((char *)show));
-		HAL_Delay(100);
+		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);
 	}
-	CDC_Transmit_FS((uint8_t *)"\n", 1);
 	
-	CS_LOW;
+
 	
-	send[0] = 0x03;
-	HAL_SPI_Transmit(&hspi1,send, 1, 1000);
-	HAL_Delay(100);
-	HAL_SPI_Receive(&hspi1, receive ,10, 1000);	
-	
-	CS_HIGH;
-		
+
+//	CDC_Transmit_FS((uint8_t *)"ACK Packet:", 11); 
+//	for(uint8_t i = 0; i < 6; i++)
+//	{
+//		uint8_t show[10];
+//		sprintf((char* )show, "0x%02X ",receive[i]); 
+//		if(receive[i] == 0)
+//		{
+//			HAL_GPIO_WritePin(GPIOD , GPIO_PIN_12, GPIO_PIN_SET);
+//			HAL_Delay(50);
+//		}
+//		HAL_GPIO_WritePin(GPIOD , GPIO_PIN_12, GPIO_PIN_RESET);
+//		
+//		CDC_Transmit_FS(show, strlen((char *)show));
+//		HAL_Delay(100);
+//	}
+//	CDC_Transmit_FS((uint8_t *)"\n", 1);
+//	
+//	
+//	CDC_Transmit_FS((uint8_t *)"Received frame is:", 18);   
+//	
+//	for(uint8_t i = 0; i < 10; i++)
+//	{
+//		uint8_t show[10];
+//		sprintf((char* )show, "0x%02X ",receive[i]); 
+//		if(receive[i] == 0)
+//		{
+//			HAL_GPIO_WritePin(GPIOD , GPIO_PIN_12, GPIO_PIN_SET);
+//			HAL_Delay(50);
+//		}
+//		HAL_GPIO_WritePin(GPIOD , GPIO_PIN_12, GPIO_PIN_RESET);
+//		
+//		CDC_Transmit_FS(show, strlen((char *)show));
+//		HAL_Delay(100);
+//	}
+//	CDC_Transmit_FS((uint8_t *)"\n", 1);
+//	
+
 		HAL_Delay(500);
-		HAL_GPIO_WritePin(GPIOD , GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_15, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(GPIOD , GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
 		while(!HAL_GPIO_ReadPin(Button_Blue_GPIO_Port, Button_Blue_Pin));
 
-    /* USER CODE BEGIN 3 */
+    
 	}
   /* USER CODE END 3 */
 }
@@ -230,6 +217,40 @@ void SystemClock_Config(void)
 }
 
 /**
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C1_Init(void)
+{
+
+  /* USER CODE BEGIN I2C1_Init 0 */
+
+  /* USER CODE END I2C1_Init 0 */
+
+  /* USER CODE BEGIN I2C1_Init 1 */
+
+  /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.ClockSpeed = 1000;
+  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C1_Init 2 */
+
+  /* USER CODE END I2C1_Init 2 */
+
+}
+
+/**
   * @brief SPI1 Initialization Function
   * @param None
   * @retval None
@@ -247,7 +268,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.Mode = SPI_MODE_MASTER;
   hspi1.Init.Direction = SPI_DIRECTION_2LINES;
   hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
-  hspi1.Init.CLKPolarity = SPI_POLARITY_HIGH;
+  hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
   hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256;
@@ -278,9 +299,10 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(CP_SLC_GPIO_Port, CP_SLC_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(CP_SLC_GPIO_Port, CP_SLC_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
