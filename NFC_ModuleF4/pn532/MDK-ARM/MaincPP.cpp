@@ -130,20 +130,322 @@ int main(void)
 //		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);
 //	}
 //	
-uint32_t version_number = 0;
+	uint32_t version_number = 0;
 
-version_number = rfid.getFirmwareVersion();
-if( 0x32010607 == 	version_number)
-	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);
-uint8_t lcd[50];
-sprintf((char *)lcd , "Firmware version is: 0x%X\n",version_number);
 	
-CDC_Transmit_FS(lcd ,strlen((const char *)lcd));
+
+                   // Length of the UID (4 or 7 bytes depending on ISO14443A card type)
+    
+  // Wait for an ISO14443A type cards (Mifare, etc.).  When one is found
+  // 'uid' will be populated with the UID, and uidLength will indicate
+  // if the uid is 4 bytes (Mifare Classic) or 7 bytes (Mifare Ultralight)
+	while(1)
+	{
+		
+		version_number = rfid.getFirmwareVersion();
+		if( 0 != version_number)
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);
+		uint8_t lcd[50];
+		sprintf((char *)lcd , "\nFirmware version is: 0x%X\n",version_number);
+		CDC_Transmit_FS(lcd ,strlen((const char *)lcd));
+		rfid.SAMConfig();
+		sprintf((char *)lcd ,"Waiting for an ISO14443A Card ...\n");
+		CDC_Transmit_FS(lcd ,strlen((const char *)lcd));
+			
+		
 
 
+		uint8_t success;
+		uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned UID
+		uint8_t uidLength;  
+    uint8_t data[16];		
+		uint8_t name [16] = "ARA AVL";
+		uint8_t over_flow = 0;
+		do
+		{
+			success = rfid.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength);
+			HAL_Delay(50);
+			over_flow++;
+		}while(success == 0 && over_flow < 10);
+		if(over_flow >= 100)
+		{
+			sprintf((char *)lcd ,"\ntime out\n");
+			CDC_Transmit_FS(lcd ,strlen((const char *)lcd));
+		}
+			
+		if(success)
+		{
+			sprintf((char *)lcd ,"\nFound chip PN5\n");
+			CDC_Transmit_FS(lcd ,strlen((const char *)lcd));
+			
+			
+			sprintf((char *)lcd ,"UID Length: %d Bytes:\n", uidLength);
+			CDC_Transmit_FS(lcd ,strlen((const char *)lcd));
+			
+			for(uint8_t i = 0;i < uidLength;i++)
+			{
+				sprintf((char *)lcd ," 0x%x ", uid[i]);
+				CDC_Transmit_FS(lcd ,strlen((const char *)lcd));
+				HAL_Delay(5);
+			}
+			
+			sprintf((char *)lcd ,"\n");
+			CDC_Transmit_FS(lcd ,strlen((const char *)lcd));
+			
+			if (uidLength == 4)
+			{
+				sprintf((char *)lcd ,"Seems to be a Mifare Classic card (4 byte UID)\n");
+				CDC_Transmit_FS(lcd ,strlen((const char *)lcd));
+				
+				sprintf((char *)lcd ,"Trying to authenticate block 4 with default KEYA value\n");
+				CDC_Transmit_FS(lcd ,strlen((const char *)lcd));
+				
+
+				uint8_t keya[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+				// Start with block 4 (the first block of sector 1) since sector 0
+				// contains the manufacturer data and it's probably better just
+				// to leave it alone unless you know what you're doing
+				success = rfid.mifareclassic_AuthenticateBlock(uid, uidLength, 4, MIFARE_CMD_AUTH_A, keya);
+				
+				if(success)
+				{
+					sprintf((char *)lcd ,"Sector 1 (Blocks 4..7) has been authenticated\n");
+					CDC_Transmit_FS(lcd ,strlen((const char *)lcd));
+
+					//If you want to write something to block 4 to test with, uncomment
+					//the following line and this text should be read back in a minute
+					//memcpy(data, (const uint8_t[16]){ 'a', 'r', 'a', 'c', 'o', 'm', 'm', 'u', 'n', 'i', 'c', 'm', 0, 0, 0, 0 }, strlen((const char *)data));
+					 
+//					if(rfid.mifareclassic_WriteDataBlock (4, name))
+//					{
+//						sprintf((char *)lcd ,"Data has written succsessfully\n");
+//						CDC_Transmit_FS(lcd ,strlen((const char *)lcd));
+//					}
+//					else
+//					{
+//						sprintf((char *)lcd ,"Data write field\n");
+//						CDC_Transmit_FS(lcd ,strlen((const char *)lcd));
+//					}
+					
+					// Try to read the contents of block 4
+					if(rfid.mifareclassic_ReadDataBlock(4, data))
+					{
+						sprintf((char *)lcd ,"Data has Read succsessfully\nData is:");
+						CDC_Transmit_FS(lcd ,strlen((const char *)lcd));
+						
+						for(uint8_t i = 0;i < 16;i++)
+						{
+							sprintf((char *)lcd ," 0x%x ", data[i]);
+							CDC_Transmit_FS(lcd ,strlen((const char *)lcd));
+							HAL_Delay(5);
+						}
+						sprintf((char *)lcd ,"string type is:\n");
+						CDC_Transmit_FS(lcd ,strlen((const char *)lcd));
+						HAL_Delay(5);
+						CDC_Transmit_FS(data ,strlen((const char *)data));
+						
+						if(memcmp(( char * )data,(char * )name, 7) == 0)
+						{
+							HAL_GPIO_WritePin(green_port, green_pin, GPIO_PIN_SET);
+						}
+						else
+						{
+							HAL_GPIO_WritePin(red_port, red_pin, GPIO_PIN_SET);
+						}
+						
+					}
+					else
+					{
+						sprintf((char *)lcd ,"Data read field\n");
+						CDC_Transmit_FS(lcd ,strlen((const char *)lcd));
+					}
+					
+					
+					
+					
+					
+				}
+				else
+				{
+					sprintf((char *)lcd ,"Authentication failed");
+					CDC_Transmit_FS(lcd ,strlen((const char *)lcd));
+				}
+			}
+		}
+				
 		HAL_Delay(500);
 		HAL_GPIO_WritePin(GPIOD , GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
 		while(!HAL_GPIO_ReadPin(Button_Blue_GPIO_Port, Button_Blue_Pin));
+
+	}
+
+	
+	
+	
+	
+	
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+
+void setup(void) {
+  Serial.begin(115200);
+  while (!Serial) delay(10); // for Leonardo/Micro/Zero
+
+  Serial.println("Hello!");
+
+  nfc.begin();
+
+  uint32_t versiondata = nfc.getFirmwareVersion();
+  if (! versiondata) {
+    Serial.print("Didn't find PN53x board");
+    while (1); // halt
+  }
+  // Got ok data, print it out!
+  Serial.print("Found chip PN5"); Serial.println((versiondata>>24) & 0xFF, HEX); 
+  Serial.print("Firmware ver. "); Serial.print((versiondata>>16) & 0xFF, DEC); 
+  Serial.print('.'); Serial.println((versiondata>>8) & 0xFF, DEC);
+  
+  // configure board to read RFID tags
+  nfc.SAMConfig();
+  
+  Serial.println("Waiting for an ISO14443A Card ...");
+}
+
+
+void loop(void) {
+  uint8_t success;
+  uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned UID
+  uint8_t uidLength;                        // Length of the UID (4 or 7 bytes depending on ISO14443A card type)
+    
+  // Wait for an ISO14443A type cards (Mifare, etc.).  When one is found
+  // 'uid' will be populated with the UID, and uidLength will indicate
+  // if the uid is 4 bytes (Mifare Classic) or 7 bytes (Mifare Ultralight)
+  success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength);
+  
+  if (success) {
+    // Display some basic information about the card
+    Serial.println("Found an ISO14443A card");
+    Serial.print("  UID Length: ");Serial.print(uidLength, DEC);Serial.println(" bytes");
+    Serial.print("  UID Value: ");
+    nfc.PrintHex(uid, uidLength);
+    Serial.println("");
+    
+    if (uidLength == 4)
+    {
+      // We probably have a Mifare Classic card ... 
+      Serial.println("Seems to be a Mifare Classic card (4 byte UID)");
+	  
+      // Now we need to try to authenticate it for read/write access
+      // Try with the factory default KeyA: 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF
+      Serial.println("Trying to authenticate block 4 with default KEYA value");
+      uint8_t keya[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+	  
+	  // Start with block 4 (the first block of sector 1) since sector 0
+	  // contains the manufacturer data and it's probably better just
+	  // to leave it alone unless you know what you're doing
+      success = nfc.mifareclassic_AuthenticateBlock(uid, uidLength, 4, 0, keya);
+	  
+      if (success)
+      {
+        Serial.println("Sector 1 (Blocks 4..7) has been authenticated");
+        uint8_t data[16];
+		
+        // If you want to write something to block 4 to test with, uncomment
+		// the following line and this text should be read back in a minute
+        //memcpy(data, (const uint8_t[]){ 'a', 'd', 'a', 'f', 'r', 'u', 'i', 't', '.', 'c', 'o', 'm', 0, 0, 0, 0 }, sizeof data);
+        // success = nfc.mifareclassic_WriteDataBlock (4, data);
+
+        // Try to read the contents of block 4
+        success = nfc.mifareclassic_ReadDataBlock(4, data);
+		
+        if (success)
+        {
+          // Data seems to have been read ... spit it out
+          Serial.println("Reading Block 4:");
+          nfc.PrintHexChar(data, 16);
+          Serial.println("");
+		  
+          // Wait a bit before reading the card again
+          delay(1000);
+        }
+        else
+        {
+          Serial.println("Ooops ... unable to read the requested block.  Try another key?");
+        }
+      }
+      else
+      {
+        Serial.println("Ooops ... authentication failed: Try another key?");
+      }
+    }
+    
+    if (uidLength == 7)
+    {
+      // We probably have a Mifare Ultralight card ...
+      Serial.println("Seems to be a Mifare Ultralight tag (7 byte UID)");
+	  
+      // Try to read the first general-purpose user page (#4)
+      Serial.println("Reading page 4");
+      uint8_t data[32];
+      success = nfc.mifareultralight_ReadPage (4, data);
+      if (success)
+      {
+        // Data seems to have been read ... spit it out
+        nfc.PrintHexChar(data, 4);
+        Serial.println("");
+		
+        // Wait a bit before reading the card again
+        delay(1000);
+      }
+      else
+      {
+        Serial.println("Ooops ... unable to read the requested page!?");
+      }
+    }
+  }
+}
+
+
+
+
+
+
+
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     
 	}	

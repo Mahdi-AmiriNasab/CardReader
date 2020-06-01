@@ -66,6 +66,20 @@ class DBG
 	private:
 };
 
+//class serial_print
+//{
+//	public:
+//	serial_print(void);
+//	void begin(uint16_t br);
+//	void print(const uint8_t *str);
+//	void print(const uint8_t *str,uint8_t var1);
+//	void print(const uint8_t *str,uint8_t  var1, uint8_t  var2);
+//	private:
+//		
+
+//}
+//;
+
 
 #endif
 
@@ -185,6 +199,8 @@ class DBG
 #define PN532_GPIO_P33 (3)
 #define PN532_GPIO_P34 (4)
 #define PN532_GPIO_P35 (5)
+
+
 
 class Adafruit_PN532 {
 public:

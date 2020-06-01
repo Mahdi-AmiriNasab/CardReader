@@ -64,7 +64,9 @@
 #else
 /***********Includes***********/
 #include <Wire_a.h>
-
+#include <stdio.h>
+#include <string.h>
+#include "usbd_cdc_if.h"
 
 /******Exernal variables*******/
 extern SPI_HandleTypeDef SPI_SCT;
@@ -96,6 +98,30 @@ void DBG::println (void)
 {}
 	
 DBG Ser;
+	
+//	
+//serial_print::serial_print(void)
+//{}
+//void serial_print::begin(uint16_t br)
+//{}
+//void serial_print::print(const uint8_t *str)
+//{
+//	
+//	CDC_Transmit_FS((const uint8_t* )str ,sizeof((const uint8_t* )str));
+//	
+//}
+//void serial_print::print(const uint8_t *str,uint8_t var1)
+//{}
+//void serial_print::print(const uint8_t *str,uint8_t  var1, uint8_t  var2)
+//{}
+
+//	
+//	void print(const uint8_t str);
+//	void print(const uint8_t str,uint8_t var1);
+//	void print(const uint8_t str,uint8_t  var1, uint8_t  var2);
+
+//		
+
 #endif
 
 #ifndef  __string_h
@@ -1908,3 +1934,7 @@ void Adafruit_PN532::writecommand(uint8_t *cmd, uint8_t cmdlen) {
 #endif
   
 }
+
+
+	
+

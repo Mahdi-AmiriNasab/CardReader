@@ -67,6 +67,15 @@ void Error_Handler(void);
 #define IRQ_Pin GPIO_PIN_5
 #define IRQ_GPIO_Port GPIOC
 /* USER CODE BEGIN Private defines */
+#define orange_port 	GPIOD
+#define red_port 			GPIOD
+#define green_port 		GPIOD
+#define blue_port 		GPIOD
+
+#define orange_pin 	GPIO_PIN_13
+#define red_pin 		GPIO_PIN_14
+#define green_pin 	GPIO_PIN_12
+#define blue_pin 		GPIO_PIN_15
 
 /* USER CODE END Private defines */
 
