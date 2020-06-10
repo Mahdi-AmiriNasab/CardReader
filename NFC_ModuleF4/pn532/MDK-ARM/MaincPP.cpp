@@ -20,6 +20,188 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+// This is the most important switch: It defines if you want to use Mifare Classic or Desfire EV1 cards.
+// If you set this define to false the users will only be identified by the UID of a Mifare Classic or Desfire card.
+// This mode is only for testing if you have no Desfire cards available.
+// Mifare Classic cards have been cracked due to a badly implemented encryption. 
+// It is easy to clone a Mifare Classic card (including it's UID).
+// You should use Defire EV1 cards for any serious door access system.
+// When using Desfire EV1 cards a 16 byte data block is stored in the card's EEPROM memory 
+// that can only be read with the application master key.
+// To clone a Desfire card it would be necessary to crack a 168 bit 3K3DES or a 128 bit AES key data which is impossible.
+// If the Desfire card does not contain the correct data the door will not open even if the UID is correct.
+// IMPORTANT: After changing this compiler switch, please execute the CLEAR command!
+#define USE_DESFIRE   false
+
+#if USE_DESFIRE
+    // This compiler switch defines if you use AES (128 bit) or DES (168 bit) for the PICC master key and the application master key.
+    // Cryptographers say that AES is better.
+    // But the disadvantage of AES encryption is that it increases the power consumption of the card more than DES.
+    // The maximum read distance is 5,3 cm when using 3DES keys and 4,0 cm when using AES keys.
+    // (When USE_DESFIRE == false the same Desfire card allows a distance of 6,3 cm.)
+    // If the card is too far away from the antenna you get a timeout error at the moment when the Authenticate command is executed.
+    // IMPORTANT: Before changing this compiler switch, please execute the RESTORE command on all personalized cards!
+    #define USE_AES   false
+
+    // This define should normally be zero
+    // If you want to run the selftest (only available if USE_DESFIRE == true) you must set this to a value > 0.
+    // Then you can enter TEST into the terminal to execute a selftest that tests ALL functions in the Desfire class.
+    // The value that you can specify here is 1 or 2 which will be the debug level for the selftest.
+    // At level 2 you see additionally the CMAC and the data sent to and received from the card.
+    #define COMPILE_SELFTEST  0
+    
+    // This define should normally be false
+    // If this is true you can use Classic cards / keyfobs additionally to Desfire cards.
+    // This means that the code is compiled for Defire cards, but when a Classic card is detected it will also work.
+    // This mode is not recommended because Classic cards do not offer the same security as Desfire cards.
+    #define ALLOW_ALSO_CLASSIC   true
+#endif
+
+// This password will be required when entering via Terminal
+// If you define an empty string here, no password is requested.
+// If any unauthorized person may access the dooropener hardware phyically you should provide a password!
+#define PASSWORD  ""
+// The interval of inactivity in minutes after which the password must be entered again (automatic log-off)
+#define PASSWORD_TIMEOUT  5
+
+// This Arduino / Teensy pin is connected to the relay that opens the door 1
+#define DOOR_1_PIN       20
+
+// This Arduino / Teensy pin is connected to the optional relay that opens the door 2
+#define DOOR_2_PIN       21
+
+// This Arduino / Teensy pin is connected to the PN532 RSTPDN pin (reset the PN532)
+// When a communication error with the PN532 is detected the board is reset automatically.
+#define RESET_PIN         2
+// The software SPI SCK  pin (Clock)
+#define SPI_CLK_PIN       3
+// The software SPI MISO pin (Master In, Slave Out)
+#define SPI_MISO_PIN      1
+// The software SPI MOSI pin (Master Out, Slave In)
+#define SPI_MOSI_PIN      4
+// The software SPI SSEL pin (Chip Select)
+#define SPI_CS_PIN        0
+ 
+// This Arduino / Teensy pin is connected to the green LED in a two color LED.
+// The green LED flashes fast while no card is present and flashes 1 second when opening the door.
+#define LED_GREEN_PIN    10
+
+// This Arduino / Teensy pin is connected to the red LED in a two color LED.
+// The red LED flashes slowly when a communication error occurred with the PN532 chip and when 
+// an unauthorized person tries to open the door.
+// It flashes fast when a power failure has been detected. (Charging battery failed)
+#define LED_RED_PIN      12
+
+// This Arduino / Teensy pin is connected to the voltage divider that measures the 13,6V battery voltage
+#define VOLTAGE_MEASURE_PIN  A5
+
+// If the battery voltage decreases more than (MAX_VOLTAGE_DROP / 10) Volt when opening the door, the battery is old and must be replaced soon.
+// If the battery is sane the voltage stays constant even if multiple Amperes are drawn.
+// The older the battery gets, the higher becomes it's impedance and the voltage decreases when the door opener solenoid draws current.
+// When the battery gets old the red and green LED will blink alternatingly.
+#define MAX_VOLTAGE_DROP  10  // 1 Volt
+
+// The pin that connects to the button that opens the door
+// This pin is ignored if BUTTON_OPEN_DOOR == NO_DOOR
+#define BUTTON_OPEN_PIN  15
+
+// Define which door is opened when the button is pressed (NO_DOOR, DOOR_ONE, DOOR_TWO or DOOR_BOTH)
+#define BUTTON_OPEN_DOOR  NO_DOOR
+
+// Use 12 bit resolution for the analog input (ADC)
+// The Teensy 3.x boards have a 12 bit ADC.
+#define ANALOG_RESOLUTION  12
+
+// The analog reference voltage (float) of the CPU (analogReference(DEFAULT) --> 3.3V, analogReference(INTERNAL1V2) --> 1.2V)
+#define ANALOG_REFERENCE   1.2
+
+// This factor (float) is used to calculate the battery voltage.
+// If the external voltage divider is 220 kOhm / 15 kOhm the factor is theoretically 15.66666 == (220 + 15) / 15.
+// You must fine tune this value until the battery voltage is displayed correctly when you hit Enter in the Terminal.
+// Therefor you must unplug the 220V power suppply and measure the real voltage at the battery.
+#define VOLTAGE_FACTOR   15.9
+
+// The interval in milliseconds that the relay is powered which opens the door
+#define OPEN_INTERVAL   100
+
+// This is the interval that the RF field is switched off to save battery.
+// The shorter this interval, the more power is consumed by the PN532.
+// The longer  this interval, the longer the user has to wait until the door opens.
+// The recommended interval is 1000 ms.
+// Please note that the slowness of reading a Desfire card is not caused by this interval.
+// The SPI bus speed is throttled to 10 kHz, which allows to transmit the data over a long cable, 
+// but this obviously makes reading the card slower.
+#define RF_OFF_INTERVAL  1000
+
+// ######################################################################################
+
+#if defined(__MK20DX256__) // the CPU of the Teensy 3.1 / 3.2
+    #if !defined(USB_SERIAL)
+        #error "Switch the compiler to USB Type = 'Serial'"
+    #endif
+    #if F_CPU != 24000000
+        #error "Switch the compiler to CPU Speed = '24 MHz optimized'"
+    #endif
+#else
+    #warning "This code has not been tested on any other board than Teensy 3.1 / 3.2"
+#endif
+
+#if USE_DESFIRE
+    #if USE_AES
+        #define DESFIRE_KEY_TYPE   AES
+        #define DEFAULT_APP_KEY    gi_PN532.AES_DEFAULT_KEY
+    #else
+        #define DESFIRE_KEY_TYPE   DES
+        #define DEFAULT_APP_KEY    gi_PN532.DES3_DEFAULT_KEY
+    #endif
+    
+    #include "Desfire.h"
+    #include "Secrets.h"
+    #include "Buffer.h"
+    Desfire          gi_PN532; // The class instance that communicates with Mifare Desfire cards   
+    DESFIRE_KEY_TYPE gi_PiccMasterKey;
+#else
+    #include "Classic.h"
+    Classic          gi_PN532; // The class instance that communicates with Mifare Classic cards
+#endif
+
+#include "UserManager.h"
+
+// The tick counter starts at zero when the CPU is reset.
+// This interval is added to the 64 bit tick count to get a value that does not start at zero,
+// because gu64_LastPasswd is initialized with 0 and must always be in the past.
+#define PASSWORD_OFFSET_MS   (2 * PASSWORD_TIMEOUT * 60 * 1000)
+
+enum eLED
+{
+    LED_OFF,
+    LED_RED,
+    LED_GREEN,
+};
+
+enum eBattCheck
+{
+    BATT_OK,        // The voltage did not drop more than (MAX_VOLTAGE_DROP / 10) Volt when the door was opened the last time.
+    BATT_OLD_RED,   // The battery must be replaced soon -> flash red LED.
+    BATT_OLD_GREEN, // The battery must be replaced soon -> flash green LED.
+};
+
+struct kCard
+{
+    byte     u8_UidLength;   // UID = 4 or 7 bytes
+    byte     u8_KeyVersion;  // for Desfire random ID cards
+    bool      b_PN532_Error; // true -> the error comes from the PN532, false -> crypto error
+    eCardType e_CardType;    
+};
+
+// global variables
+char       gs8_CommandBuffer[500];    // Stores commands typed by the user via Terminal and the password
+uint32_t   gu32_CommandPos   = 0;     // Index in gs8_CommandBuffer
+uint64_t   gu64_LastPasswd   = 0;     // Timestamp when the user has enetered the password successfully
+uint64_t   gu64_LastID       = 0;     // The last card UID that has been read by the RFID reader  
+bool       gb_InitSuccess    = false; // true if the PN532 has been initialized successfully
+eBattCheck ge_BattCheck      = BATT_OK;
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -88,22 +270,11 @@ int main(void)
 	uint8_t send[100] = {0x00, 0x00, 0xff, 0x01, 0xff, 0xd4, 0x02, 0x2a, 0x00}
 	, receive[100];
 		
-//	send[0] = 0x01;
-//	send[1] = 0x00;
-//	send[2] = 0x00;
-//	send[3] = 0xff;
-//	send[4] = 0x01;
-//	send[5] = 0xff;
-//	send[6] = 0xd4;
-//	send[7] = 0x02;
-//	send[8] = 0x2a;
-//	send[9] = 0x00;
-		
-		Adafruit_PN532 rfid(irq_pin, reset_pin);
-		while(!HAL_GPIO_ReadPin(Button_Blue_GPIO_Port, Button_Blue_Pin));
-		//HAL_GPIO_WritePin(GPIOD , GPIO_PIN_15, GPIO_PIN_SET);
 
-	
+	Adafruit_PN532 rfid(irq_pin, reset_pin);
+	while(!HAL_GPIO_ReadPin(Button_Blue_GPIO_Port, Button_Blue_Pin));
+	//HAL_GPIO_WritePin(GPIOD , GPIO_PIN_15, GPIO_PIN_SET);
+
 	while(1)
 	{
     /* USER CODE END WHILE */
@@ -119,10 +290,13 @@ uint8_t lcd[50];
 sprintf((char *)lcd , "Firmware version is: 0x%X\n",version_number);
 
 HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+HAL_Delay(30);
+HAL_GPIO_WritePin(GPIOD , GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
+while(!HAL_GPIO_ReadPin(Button_Blue_GPIO_Port, Button_Blue_Pin));
 
-	//	HAL_Delay(30);
-		HAL_GPIO_WritePin(GPIOD , GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
-		//while(!HAL_GPIO_ReadPin(Button_Blue_GPIO_Port, Button_Blue_Pin));
+
+
+
 
     
 	}	
