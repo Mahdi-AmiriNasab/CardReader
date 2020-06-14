@@ -84,13 +84,13 @@
  
 // This Arduino / Teensy pin is connected to the green LED in a two color LED.
 // The green LED flashes fast while no card is present and flashes 1 second when opening the door.
-#define LED_GREEN_PIN    10
+#define LED_GREEN_PIN    12
 
 // This Arduino / Teensy pin is connected to the red LED in a two color LED.
 // The red LED flashes slowly when a communication error occurred with the PN532 chip and when 
 // an unauthorized person tries to open the door.
 // It flashes fast when a power failure has been detected. (Charging battery failed)
-#define LED_RED_PIN      12
+#define LED_RED_PIN      13
 
 // This Arduino / Teensy pin is connected to the voltage divider that measures the 13,6V battery voltage
 #define VOLTAGE_MEASURE_PIN  A5
@@ -292,7 +292,7 @@ int main(void)
 		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);
 		sprintf((char *)lcd , "Firmware version is: 0x%X\n",version_number);
 		HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
-		rfid.setPassiveActivationRetries(0x01);
+		rfid.setPassiveActivationRetries(0xff);
 		rfid.SAMConfig();
 		HAL_Delay(30);
 	}
@@ -316,47 +316,153 @@ int main(void)
 
 	uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned UID
 	uint8_t uidLength;  
-	//rfid.inListPassiveTarget();
-	type = 0x00;
-	if(rfid.InAutoPoll(1,1 , &type, 1))
+	uint8_t response[50];
+	uint8_t type [16] = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x10, 0x11, 0x12, 0x20, 0x23, 0x40, 0x41, 0x42, 0x80, 0x81, 0x82 };
+//	if(rfid.inListPassiveTarget())
+//	{
+//		sprintf((char *)lcd , "Something has found\n");
+//		HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+//	}
+	
+	if(rfid.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength, 5000))
 	{
-		sprintf((char *)lcd , "Type: 0x00\n");
-		HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+		HAL_GPIO_WritePin(GPIOD ,LED_GREEN_PIN, GPIO_PIN_SET);
+		HAL_Delay(20);
+		HAL_GPIO_WritePin(GPIOD ,LED_GREEN_PIN, GPIO_PIN_RESET);
+		sprintf((char *)lcd , "\nMIFARE_ISO14443A Found\nUID length: %d \nUID is:",uidLength);
+		HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);			
+
+		for(uint8_t i = 0; i < uidLength; i++)
+		{
+			sprintf((char *)lcd, " 0x%02X", uid[i]);
+			HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+		}
 	}
-	type = 0x10;
-	if(rfid.InAutoPoll(1,1 , &type, 1))
+	else
 	{
-		sprintf((char *)lcd , "Type: 0x10\n");
-		HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+		sprintf((char *)lcd , "\nTime out\n");
+		HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);		
 	}
-	type = 0x03;
-	if(rfid.InAutoPoll(1,1 , &type, 1))
+	/*
+	for(uint8_t i = 0; i < 16; i++)
 	{
-		sprintf((char *)lcd , "Type: 0x03\n");
-		HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+		if(rfid.InAutoPoll(1,1 , &type[i], 1))
+		{
+			sprintf((char *)lcd , "Type: 0x%02X\nResponse is:", type[i]);
+			HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+			HAL_Delay(100);
+			if(rfid.InAutoPollGetResponse(response))
+			{
+				for(uint8_t i = 0; i < 20; i++)
+					sprintf((char *)&lcd[i] , "0x%x", response[i]);
+				HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+			}
+			else
+			{
+				sprintf((char *)lcd , "Nothing found\n");
+				HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+			}	
+		}
 	}
-	type = 0x23;
-	if(rfid.InAutoPoll(1,1 , &type, 1))
-	{
-		sprintf((char *)lcd , "Type: 0x23\n");
-		HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
-	}
-	type = 0x20;
-	if(rfid.InAutoPoll(1,1 , &type, 1))
-	{
-		sprintf((char *)lcd , "Type: 0x20\n");
-		HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
-	}
+	
+	
+	*/
+//	type = 0x00;
+//	if(rfid.InAutoPoll(1,1 , &type, 1))
+//	{
+//		sprintf((char *)lcd , "Type: 0x00\nResponse is:");
+//		HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+//		HAL_Delay(100);
+//		if(rfid.InAutoPollGetResponse(response))
+//		{
+//			for(uint8_t i = 0; i < 20; i++)
+//				sprintf((char *)&lcd[i] , "0x%x", response[i]);
+//			HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+//		}
+//		else
+//		{
+//			sprintf((char *)lcd , "Nothing found\n");
+//			HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+//		}	
+//	}
+//	type = 0x10;
+//	if(rfid.InAutoPoll(1,1 , &type, 1))
+//	{
+//		sprintf((char *)lcd , "Type: 0x10\n");
+//		HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+//		HAL_Delay(100);
+//		if(rfid.InAutoPollGetResponse(response))
+//		{
+//			for(uint8_t i = 0; i < 20; i++)
+//				sprintf((char *)&lcd[i] , "0x%x", response[i]);
+//			HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+//		}
+//		else
+//		{
+//			sprintf((char *)lcd , "Nothing found\n");
+//			HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+//		}	
+//	}
+//	type = 0x03;
+//	if(rfid.InAutoPoll(1,1 , &type, 1))
+//	{
+//		sprintf((char *)lcd , "Type: 0x03\n");
+//		HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+//		HAL_Delay(100);
+//		if(rfid.InAutoPollGetResponse(response))
+//		{
+//			for(uint8_t i = 0; i < 20; i++)
+//				sprintf((char *)&lcd[i] , "0x%x", response[i]);
+//			HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+//		}
+//		else
+//		{
+//			sprintf((char *)lcd , "Nothing found\n");
+//			HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+//		}	
+//	}
+//	type = 0x23;
+//	if(rfid.InAutoPoll(1,1 , &type, 1))
+//	{
+//		sprintf((char *)lcd , "Type: 0x23\n");
+//		HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+//		HAL_Delay(100);
+//		if(rfid.InAutoPollGetResponse(response))
+//		{
+//			for(uint8_t i = 0; i < 20; i++)
+//				sprintf((char *)&lcd[i] , "0x%x", response[i]);
+//			HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+//		}
+//		else
+//		{
+//			sprintf((char *)lcd , "Nothing found\n");
+//			HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+//		}	
+//	}
+//	type = 0x20;
+//	if(rfid.InAutoPoll(1,1 , &type, 1))
+//	{
+//		sprintf((char *)lcd , "Type: 0x20\n");
+//		HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+//		HAL_Delay(100);
+//		if(rfid.InAutoPollGetResponse(response))
+//		{
+//			for(uint8_t i = 0; i < 20; i++)
+//				sprintf((char *)&lcd[i] , "0x%x", response[i]);
+//			HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+//		}
+//		else
+//		{
+//			sprintf((char *)lcd , "Nothing found\n");
+//			HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+//		}	
+//	}
 //	
 //		sprintf((char *)lcd , "Nothing found :)\n");
 //		HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
 //	
 //	
-//	if(rfid.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength))
-//	{
-//		sprintf((char *)lcd , "MIFARE_ISO14443A Found\nUID length: %d \n",uidLength);
-//		HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);			
-//	}
+
 
 HAL_GPIO_WritePin(GPIOD , GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
 while(!HAL_GPIO_ReadPin(Button_Blue_GPIO_Port, Button_Blue_Pin));
