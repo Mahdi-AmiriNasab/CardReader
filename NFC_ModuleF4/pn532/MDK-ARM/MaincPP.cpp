@@ -272,25 +272,92 @@ int main(void)
 		
 
 	Adafruit_PN532 rfid(irq_pin, reset_pin);
+	
+		
+  uint8_t success;
+                      // Length of the UID (4 or 7 bytes depending on ISO14443A card type)
+	uint32_t version_number = 0;
+	uint8_t lcd[50];
+
+	do 
+	{
+		version_number = rfid.getFirmwareVersion();
+		sprintf((char *)lcd , "No device detected\nPress the blue button to try again\n");
+		HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+		while(!HAL_GPIO_ReadPin(Button_Blue_GPIO_Port, Button_Blue_Pin));		
+	}while(!version_number);
+	
+	if( 0x32010607 == 	version_number)
+	{
+		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);
+		sprintf((char *)lcd , "Firmware version is: 0x%X\n",version_number);
+		HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+		rfid.setPassiveActivationRetries(0x01);
+		rfid.SAMConfig();
+		HAL_Delay(30);
+	}
+	else
+	{
+		sprintf((char *)lcd , "Device not supported");
+		HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+		
+	}
 	while(!HAL_GPIO_ReadPin(Button_Blue_GPIO_Port, Button_Blue_Pin));
 	//HAL_GPIO_WritePin(GPIOD , GPIO_PIN_15, GPIO_PIN_SET);
-
+	
+	uint8_t type = 0x00;
 	while(1)
 	{
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
 		
 
-uint32_t version_number = 0;
-version_number = rfid.getFirmwareVersion();
-if( 0x32010607 == 	version_number)
-	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);
-uint8_t lcd[50];
-sprintf((char *)lcd , "Firmware version is: 0x%X\n",version_number);
+	uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned UID
+	uint8_t uidLength;  
+	//rfid.inListPassiveTarget();
+	type = 0x00;
+	if(rfid.InAutoPoll(1,1 , &type, 1))
+	{
+		sprintf((char *)lcd , "Type: 0x00\n");
+		HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+	}
+	type = 0x10;
+	if(rfid.InAutoPoll(1,1 , &type, 1))
+	{
+		sprintf((char *)lcd , "Type: 0x10\n");
+		HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+	}
+	type = 0x03;
+	if(rfid.InAutoPoll(1,1 , &type, 1))
+	{
+		sprintf((char *)lcd , "Type: 0x03\n");
+		HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+	}
+	type = 0x23;
+	if(rfid.InAutoPoll(1,1 , &type, 1))
+	{
+		sprintf((char *)lcd , "Type: 0x23\n");
+		HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+	}
+	type = 0x20;
+	if(rfid.InAutoPoll(1,1 , &type, 1))
+	{
+		sprintf((char *)lcd , "Type: 0x20\n");
+		HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+	}
+//	
+//		sprintf((char *)lcd , "Nothing found :)\n");
+//		HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
+//	
+//	
+//	if(rfid.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength))
+//	{
+//		sprintf((char *)lcd , "MIFARE_ISO14443A Found\nUID length: %d \n",uidLength);
+//		HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);			
+//	}
 
-HAL_UART_Transmit(&huart2, lcd, strlen((const char *)lcd), 100);
-HAL_Delay(30);
 HAL_GPIO_WritePin(GPIOD , GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
 while(!HAL_GPIO_ReadPin(Button_Blue_GPIO_Port, Button_Blue_Pin));
 
