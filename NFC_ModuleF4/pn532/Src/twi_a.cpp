@@ -236,7 +236,7 @@ uint8_t twi_readFrom(uint8_t address, uint8_t* data, uint8_t length, uint8_t sen
 	
   return length;
 	#else
-	HAL_I2C_Master_Receive(&handle_i2c, address << 1, data, length, sendStop,100);
+	HAL_I2C_Master_Receive(&handle_i2c, address << 1, data, length, 100);
 	return length;
 	#endif
 }
@@ -324,7 +324,7 @@ uint8_t twi_writeTo(uint8_t address, uint8_t* data, uint8_t length, uint8_t wait
 	#else
 	if (address < 0x40)
 		address <<= 1;
-	if(HAL_I2C_Master_Transmit(&handle_i2c , address, data, length, sendStop, 100) == HAL_OK)
+	if(HAL_I2C_Master_Transmit(&handle_i2c , address, data, length, 100) == HAL_OK)
 		return 0;
 	else 
 		return 4;
