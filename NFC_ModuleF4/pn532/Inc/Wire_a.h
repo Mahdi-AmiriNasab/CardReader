@@ -23,6 +23,7 @@
 #define TwoWire_h
 
 #include <inttypes.h>
+#include <stdio.h>
 //#include "Stream.h"
 
 #define BUFFER_LENGTH 32

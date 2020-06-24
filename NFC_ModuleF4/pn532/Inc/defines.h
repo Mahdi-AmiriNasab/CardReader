@@ -20,7 +20,7 @@ extern "C" {
 	#define irq_pin 		IRQ_Pin 
 	#define irq_port 		IRQ_GPIO_Port 
 
-	#define irq 		PC5			
+	
 	
 
 	//extern structures
@@ -130,11 +130,15 @@ enum PinNumber
 		BOARD_NR_GPIO_PINS
 };
 
-enum PinState
+typedef enum 
 {
     HIGH =  1,
     LOW =   0, 
-};
+}PinState;
+
+
+uint8_t digitalRead(uint8_t pin_number);
+uint8_t digitalWrite(uint8_t pin_number,  PinState state);
 
 
 #ifdef __cplusplus

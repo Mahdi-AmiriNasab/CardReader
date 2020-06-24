@@ -2,17 +2,32 @@
 #ifndef ADAFRUIT_PN532_H
 #define ADAFRUIT_PN532_H
 
-#define USE_HAL_DRIVER
-#define USE_HARDWARE_I2C
 
 //#include "Utils.h"
+#ifndef USE_HAL_DRIVER
+#include "Arduino.h"
+#include <Adafruit_SPIDevice.h>
 
+#define SER Serial2     // arduino serial port
+#else
+#include "main.h"
+#include <defines.h>
+typedef  uint8_t byte;
 
+class DBG
+{
+	public:
+		 void print (const char *str);
+		 void println (const char *str);
+		 void println (void);
+	private:
+};
+
+#endif
 #define USE_SOFTWARE_SPI   false   // Visual Studio needs this in upper case
 #define USE_HARDWARE_SPI   false  // Visual Studio needs this in upper case
 #define USE_HARDWARE_I2C   true  // Visual Studio needs this in upper case
 
-#define SER Serial2
 #define LF  "\r\n" // LineFeed 
 
 #if USE_HARDWARE_SPI
@@ -40,18 +55,6 @@
 							  		HAL_Delay(10)
 
 
-typedef  uint8_t byte;
-
-class DBG
-{
-	public:
-		inline void print (const uint8_t *str, const uint8_t  type);
-		inline void print (const uint8_t *str);
-		inline void println (const uint8_t *str, const uint8_t type);
-		inline void println (const uint8_t *str);
-		inline void println (void);
-	private:
-};
 
 
 
@@ -212,6 +215,7 @@ class PN532
     #endif
     
     // Generic PN532 functions
+    PN532(uint8_t irq, uint8_t reset);
     void begin();  
     void SetDebugLevel(byte level);
     bool SamConfig();
@@ -246,11 +250,13 @@ class PN532
     byte mu8_PacketBuffer[PN532_PACKBUFFSIZE];
 
  private:
+	 //#include <defines.h>
     byte mu8_ClkPin;
     byte mu8_MisoPin;  
     byte mu8_MosiPin;  
     byte mu8_SselPin;  
     byte mu8_ResetPin;
+    byte mu8_Irq;
 };
 
 #endif
