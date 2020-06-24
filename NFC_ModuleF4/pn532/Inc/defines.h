@@ -14,11 +14,10 @@ extern "C" {
 	#define handle_i2c 	 hi2c1
 	#define handle_uart  huart2
 	
-	#define reset_pin 	RSTO_Pin 
-	#define reset_port 	RSTO_GPIO_Port 
+	#define reset_pin 	PC6 
 	
-	#define irq_pin 		IRQ_Pin 
-	#define irq_port 		IRQ_GPIO_Port 
+	#define irq_pin     PC5 
+	
 
 	
 	
