@@ -12,16 +12,16 @@
 #else
 #include "main.h"
 #include <defines.h>
-typedef  uint8_t byte;
+// typedef  uint8_t byte;
 
-class DBG
-{
-	public:
-		 void print (const char *str);
-		 void println (const char *str);
-		 void println (void);
-	private:
-};
+// class DBG
+// {
+// 	public:
+// 		 void print (const char *str);
+// 		 void println (const char *str);
+// 		 void println (void);
+// 	private:
+// };
 
 #endif
 #define USE_SOFTWARE_SPI   false   // Visual Studio needs this in upper case
@@ -81,7 +81,7 @@ class DBG
 
 // The maximum time to wait for an answer from the PN532
 // Do NOT use infinite timeouts like in Adafruit code!
-#define PN532_TIMEOUT  1000
+#define PN532_TIMEOUT  2000
 
 // The packet buffer is used for sending commands and for receiving responses from the PN532
 #define PN532_PACKBUFFSIZE   80
@@ -199,6 +199,14 @@ enum eCardType
     CARD_DesRandom = 3, // A Desfire card with 4 byte random UID  (bit 0 + 1)
 };
 
+struct kCard
+{
+    byte     u8_UidLength;   // UID = 4 or 7 bytes
+    byte     u8_KeyVersion;  // for Desfire random ID cards
+    bool      b_PN532_Error; // true -> the error comes from the PN532, false -> crypto error
+    eCardType e_CardType;    
+};
+
 class PN532
 {
  public:
@@ -221,7 +229,7 @@ class PN532
     bool SamConfig();
     bool GetFirmwareVersion(byte* pIcType, byte* pVersionHi, byte* pVersionLo, byte* pFlags);
     bool WriteGPIO(bool P30, bool P31, bool P33, bool P35);
-    bool SetPassiveActivationRetries();
+    bool SetPassiveActivationRetries(uint8_t maxRetries);
     bool DeselectCard();
     bool ReleaseCard();
     bool SelectCard();

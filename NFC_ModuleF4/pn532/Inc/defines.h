@@ -7,31 +7,56 @@ extern "C" {
 #endif
 
 #include "main.h"
+#include "string.h"
+#include "stdio.h"
 #include "twi_a.h"
 	
 	
-	//definition
-	#define handle_i2c 	 hi2c1
-	#define handle_uart  huart2
-	
-	#define reset_pin 	PC6 
-	
-	#define irq_pin     PC5 
-	
-
-	
-	
-
-	//extern structures
-	extern I2C_HandleTypeDef handle_i2c;
-	extern UART_HandleTypeDef handle_uart;
+// Classes 
+class DBG
+{
+	public:
+		void print (const char *str);
+		void println (const char *str);
+		void println (void);
+	private:
+};
 
 
+//definition
+#define handle_i2c 	 hi2c1
+#define handle_uart  huart2
+#define reset_pin 	PC6 
+#define irq_pin     PC5 
+
+
+//extern structures
+extern I2C_HandleTypeDef handle_i2c;
+extern UART_HandleTypeDef handle_uart;
+typedef  uint8_t byte;
 
 
 
+/**********Inline Classes*************/
 
-	#define CLOCK_SPEED_MHZ   96
+//    inline void DBG::print (const uint8_t *str, const uint8_t  type)
+//    {}
+inline void DBG::print (const char *str)
+{
+	HAL_UART_Transmit(&handle_uart,(uint8_t *)str ,strlen((const char *)str), 100);  
+}        
+//    inline void DBG::println (const uint8_t *str, const uint8_t type)
+//    {}
+inline void DBG::println(const char *str)
+{
+	HAL_UART_Transmit(&handle_uart,(uint8_t *)str ,strlen((const char *)str), 100); 
+	HAL_UART_Transmit(&handle_uart,(uint8_t*)"\n" ,1, 100); 
+}
+// inline void DBG::println (void)
+// {}
+
+
+#define CLOCK_SPEED_MHZ   96
 
 
 #define BOARD_LED_PIN           PD12
