@@ -43,7 +43,6 @@
     
 **************************************************************************/
 
-#include "PN532.h"
 
 #ifndef  USE_HAL_DRIVER
 	#include "Arduino.h"
@@ -59,52 +58,43 @@
 
 #else
 /***********Includes***********/
-    #include <Wire_a.h>
-    #include <stdio.h>
-
+    #include <defines.h>
+	#include <Wire_a.h>
+	#include "PN532.h"
 
 
 /******Exernal variables*******/
-extern SPI_HandleTypeDef SPI_SCT;
+//extern SPI_HandleTypeDef SPI_SCT;
 extern UART_HandleTypeDef handle_huart;
 /*********Definitions**********/
     #ifndef WIRE
         #define WIRE Wire
     #endif
 
-    #define ARDUINO 100
-    #define F 			(const uint8_t *)
-    #define HEX 		(const uint8_t *) 1
-    #define delay(milisec) HAL_Delay(milisec)
 
 
 /**********Classes*************/
-    inline void DBG::print (const uint8_t *str, const uint8_t  type)
-    {}
-    inline void DBG::print (const uint8_t *str)
-    {
-        uint8_t lcd[50];
-        HAL_UART_Transmit(&handle_uart,lcd ,strlen((const char *)lcd), 100);  
-    }
+//    inline void DBG::print (const uint8_t *str, const uint8_t  type)
+//    {}
+    // inline void DBG::print (const char *str)
+    // {
+    //     HAL_UART_Transmit(&handle_uart,(uint8_t *)str ,strlen((const char *)str), 100);  
+    // }
         
         
-    inline void DBG::println (const uint8_t *str, const uint8_t type)
-    {}
-    inline void DBG::println (const uint8_t *str)
-    {
-        uint8_t lcd[50];
-        HAL_UART_Transmit(&handle_uart,lcd ,strlen((const char *)lcd), 100); 
-        HAL_UART_Transmit(&handle_uart,"\n" ,1), 100); 
-    }
-    inline void DBG::println (void)
-    {}
+//    inline void DBG::println (const uint8_t *str, const uint8_t type)
+//    {}
+    // inline void DBG::println(const char *str)
+    // {
+    //     HAL_UART_Transmit(&handle_uart,(uint8_t *)str ,strlen((const char *)str), 100); 
+    //     HAL_UART_Transmit(&handle_uart,(uint8_t*)"\n" ,1, 100); 
+    // }
+   // inline void DBG::println (void)
+   // {}
         
-    DBG Ser;
+    DBG SER;
 #endif
 
-#ifndef  __string_h
-    #include "string.h"
-#endif
 
 
 
@@ -119,6 +109,8 @@ PN532::PN532(uint8_t irq, uint8_t reset) :
     mu8_MosiPin    = 0;  
     mu8_SselPin    = 0;  
     mu8_ResetPin   = 0;
+	mu8_DebugLevel = 2;
+	
 }
 
 /**************************************************************************
@@ -182,6 +174,8 @@ PN532::PN532(uint8_t irq, uint8_t reset) :
 **************************************************************************/
 void PN532::begin() 
 {
+	
+
     if (mu8_DebugLevel > 0) SER.print("\r\n*** begin()\r\n");
 
     digitalWrite(mu8_ResetPin, HIGH);
@@ -283,7 +277,7 @@ bool PN532::SamConfig(void)
 /**************************************************************************
     Sets the amount of reties that the PN532 tries to activate a target
 **************************************************************************/
-bool PN532::SetPassiveActivationRetries() 
+bool PN532::SetPassiveActivationRetries(uint8_t maxRetries) 
 {
     if (mu8_DebugLevel > 0) SER.print("\r\n*** SetPassiveActivationRetries()\r\n");
   
@@ -291,7 +285,7 @@ bool PN532::SetPassiveActivationRetries()
     mu8_PacketBuffer[1] = 5;    // Config item 5 (MaxRetries)
     mu8_PacketBuffer[2] = 0xFF; // MxRtyATR (default = 0xFF)
     mu8_PacketBuffer[3] = 0x01; // MxRtyPSL (default = 0x01)
-    mu8_PacketBuffer[4] = 3;    // one retry is enough for Mifare Classic but Desfire is slower (if you modify this, you must also modify PN532_TIMEOUT!)
+    mu8_PacketBuffer[4] = maxRetries;    // one retry is enough for Mifare Classic but Desfire is slower (if you modify this, you must also modify PN532_TIMEOUT!)
     
     if (!SendCommandCheckAck(mu8_PacketBuffer, 5))
         return false;
@@ -676,7 +670,9 @@ bool PN532::CheckPN532Status(byte u8_Status)
 **************************************************************************/
 bool PN532::IsReady() 
 {
-    #if (USE_HARDWARE_SPI || USE_SOFTWARE_SPI) 
+
+
+    #if (USE_HARDWARE_SPI) || (USE_SOFTWARE_SPI)
     {
         digitalWrite(mu8_SselPin, LOW);
         delay(2); // INDISPENSABLE!! Otherwise reads bullshit
@@ -702,7 +698,7 @@ bool PN532::IsReady()
 
         #ifdef USE_HAL_DRIVER	
             // I2C check if status is ready by IRQ line being pulled low.
-            uint8_t x = digitalRead(_irq);
+            uint8_t x = digitalRead(mu8_Irq);
             return x == 0;
         #else
             // After reading this byte, the bus must be released with a Stop condition
@@ -717,6 +713,7 @@ bool PN532::IsReady()
             }        
             
             return u8_Ready == PN532_I2C_READY; // 0x01
+			#endif
     }
     #endif
 }
