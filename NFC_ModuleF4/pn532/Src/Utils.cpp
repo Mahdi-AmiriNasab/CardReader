@@ -192,29 +192,29 @@ uint32_t Utils::CalcCrc32(const byte* u8_Data, int s32_Length, uint32_t u32_Crc)
 // For Teensy they can be replaced with the original functions.
 int Utils::stricmp(const char* str1, const char* str2)
 {
-    return strnicmp(str1, str2, 0xFFFFFFFF);
+    return strcmp(str1, str2);
 }
-int Utils::strnicmp(const char* str1, const char* str2, uint32_t u32_MaxCount)
-{
-  #define modified_code 1
+//int Utils::strnicmp(const char* str1, const char* str2, uint32_t u32_MaxCount)
+//{
+//  #define modified_code 1
 
-  #ifdef modified_code 0
-    byte c1 = 0;
-    byte c2 = 0;
-    for (uint32_t i=0; i<u32_MaxCount; i++)
-    {
-        c1 = str1[i];
-        c2 = str2[i];
-        if (c1 >= 'a' && c1 <= 'z') c1 -= 32; // make upper case
-        if (c2 >= 'a' && c2 <= 'z') c2 -= 32;
-        if (c1 != c2 || c1 == 0)
-            break;
-    }
-    if (c1 < c2) return -1;
-    if (c1 > c2) return  1;
-    return 0;
-  #else
-    return memcmp(str1 ,str2, u32_MaxCount);
-  #endif
-}
+//  #ifdef modified_code 0
+//    byte c1 = 0;
+//    byte c2 = 0;
+//    for (uint32_t i=0; i<u32_MaxCount; i++)
+//    {
+//        c1 = str1[i];
+//        c2 = str2[i];
+//        if (c1 >= 'a' && c1 <= 'z') c1 -= 32; // make upper case
+//        if (c2 >= 'a' && c2 <= 'z') c2 -= 32;
+//        if (c1 != c2 || c1 == 0)
+//            break;
+//    }
+//    if (c1 < c2) return -1;
+//    if (c1 > c2) return  1;
+//    return 0;
+//  #else
+//    return memcmp(str1 ,str2, u32_MaxCount);
+//  #endif
+//}
 // -----------------------------------------------------------------------------------------------

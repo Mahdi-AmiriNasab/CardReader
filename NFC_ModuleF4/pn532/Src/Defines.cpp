@@ -1,9 +1,23 @@
 
 #include "defines.h"
 
+uint32_t max(uint32_t par1, uint32_t par2)
+{
+	if(par1 > par2)
+		return par1;
+	else
+		return par2;	
+}
+	
 
-
-
+uint32_t min(uint32_t par1, uint32_t par2)
+{
+	if(par1 < par2)
+		return par1;
+	else
+		return par2;	
+}
+	
  uint8_t digitalWrite(uint8_t pin_number,  PS state)
 {
 	

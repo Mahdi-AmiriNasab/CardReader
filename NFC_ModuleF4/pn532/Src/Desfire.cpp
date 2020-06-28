@@ -31,13 +31,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-
 #include "Desfire.h"
 #include "Secrets.h"
-
-Desfire::Desfire() 
-    : mi_CmacBuffer(mu8_CmacBuffer_Data, sizeof(mu8_CmacBuffer_Data))
+//PN532::PN532(uint8_t irq, uint8_t reset) :
+// mu8_ResetPin(reset) , mu8_Irq (irq)
+Desfire::Desfire(uint8_t irq, uint8_t reset)
+    : mi_CmacBuffer(mu8_CmacBuffer_Data, sizeof(mu8_CmacBuffer_Data)) , temp1(reset) , temp2(irq)
 {
+	//pin initialization
+	mu8_ResetPin = temp1;
+	mu8_Irq = temp2;
+	
     mpi_SessionKey       = NULL;
     mu8_LastAuthKeyNo    = NOT_AUTHENTICATED;
     mu8_LastPN532Error   = 0;    

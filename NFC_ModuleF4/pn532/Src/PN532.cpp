@@ -71,28 +71,7 @@ extern UART_HandleTypeDef handle_huart;
         #define WIRE Wire
     #endif
 
-
-
-/**********Classes*************/
-//    inline void DBG::print (const uint8_t *str, const uint8_t  type)
-//    {}
-    // inline void DBG::print (const char *str)
-    // {
-    //     HAL_UART_Transmit(&handle_uart,(uint8_t *)str ,strlen((const char *)str), 100);  
-    // }
-        
-        
-//    inline void DBG::println (const uint8_t *str, const uint8_t type)
-//    {}
-    // inline void DBG::println(const char *str)
-    // {
-    //     HAL_UART_Transmit(&handle_uart,(uint8_t *)str ,strlen((const char *)str), 100); 
-    //     HAL_UART_Transmit(&handle_uart,(uint8_t*)"\n" ,1, 100); 
-    // }
-   // inline void DBG::println (void)
-   // {}
-        
-    DBG SER;
+extern DBG SER;
 #endif
 
 
