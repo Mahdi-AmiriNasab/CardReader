@@ -152,8 +152,7 @@ PN532::PN532()
 **************************************************************************/
 void PN532::begin() 
 {
-	
-
+	mu8_DebugLevel = 2;
     if (mu8_DebugLevel > 0) SER.print("\r\n*** begin()\r\n");
 
     digitalWrite(mu8_ResetPin, HIGH);

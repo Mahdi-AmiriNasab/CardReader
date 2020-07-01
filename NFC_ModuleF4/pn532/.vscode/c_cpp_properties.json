@@ -12,10 +12,11 @@
                 "${default}",
                 "${workspaceFolder}/Inc",
                 "C:\\\\Users\\\\ara22\\\\Desktop\\\\CardReader\\\\NFC_ModuleF4\\\\pn532\\\\Inc"
+                ,"C:\\\\Users\\\\ara22\\\\Desktop\\\\CardReader\\\\NFC_ModuleF4\\\\pn532\\Inc"
             ],
             "browse": {
                 "path": [
-                    "C:\\\\Users\\\\ara22\\\\Desktop\\\\CardReader\\\\NFC_ModuleF4\\\\pn532\\Inc\\\\Adafruit_PN532.h"
+                    
                 ]
             }
         }

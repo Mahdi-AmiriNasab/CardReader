@@ -7,7 +7,9 @@
 
 #ifndef SECRETS_H
 #define SECRETS_H
-
+#ifdef USE_HAL_DRIVER
+	#include "defines.h"
+#endif
 // The PICC master key.
 // This 3K3DES or AES key is the "god key".
 // It allows to format the card and erase ALL it's content (except the PICC master key itself).

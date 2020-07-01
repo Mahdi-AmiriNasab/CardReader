@@ -2,6 +2,7 @@
 #ifndef DESFIRE_H
 #define DESFIRE_H
 
+#include "defines.h"
 #include "PN532.h"
 #include "DES.h"
 #include "AES128.h"
@@ -255,7 +256,8 @@ enum DESFireCmac
 class Desfire : public PN532
 {
  public:
-    Desfire();
+
+    Desfire(uint8_t irq, uint8_t reset);
     bool GetCardVersion(DESFireCardVersion* pk_Version);
     bool FormatCard();
     bool EnableRandomIDForever();
@@ -289,6 +291,9 @@ class Desfire : public PN532
     DES  DES2_DEFAULT_KEY; // 2K3DES key with  8 zeroes {00,00,00,00,00,00,00,00}
     DES  DES3_DEFAULT_KEY; // 3K3DES key with 24 zeroes 
     AES   AES_DEFAULT_KEY; // AES    key with 16 zeroes
+	// Must have enough space to hold the entire response from DF_INS_GET_APPLICATION_IDS (84 byte) + CMAC padding
+    byte          mu8_CmacBuffer_Data[120]; 
+    TxBuffer      mi_CmacBuffer;
 
  private:
     int  DataExchange(byte      u8_Command, TxBuffer* pi_Params, byte* u8_RecvBuf, int s32_RecvSize, DESFireStatus* pe_Status, DESFireCmac e_Mac);
@@ -302,10 +307,8 @@ class Desfire : public PN532
     AES           mi_AesSessionKey;
     DES           mi_DesSessionKey;
     byte          mu8_LastPN532Error;
-
-    // Must have enough space to hold the entire response from DF_INS_GET_APPLICATION_IDS (84 byte) + CMAC padding
-    byte          mu8_CmacBuffer_Data[120]; 
-    TxBuffer      mi_CmacBuffer;
+ protected:
+	 byte temp1 ,temp2;
 };
 
 #endif

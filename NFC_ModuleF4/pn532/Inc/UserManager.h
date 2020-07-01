@@ -8,6 +8,7 @@
 
 **************************************************************************/
 #include "Utils.h"
+#include "defines.h"
 #ifndef USERMANAGER_H
 #define USERMANAGER_H
 
@@ -15,6 +16,7 @@
 
 #include "Utils.h"
 #include "stdio.h"
+extern DBG SER;
 //#include <EEPROM.h>
 
 // Defines the maximum characters that can be stored for a user name + terminating zero character.
@@ -60,10 +62,11 @@ class UserManager
   public:
     static void DeleteAllUsers()
     {
-      for (uint16_t i = 0; i < EEPROM.length(); i++)
-      {
-        // EEPROM.write(i, 0);
-      }
+//      for (uint16_t i = 0; i < EEPROM.length(); i++)
+//      {
+//        EEPROM.write(i, 0);
+//      }
+		SER.print("DeleteAllUsers invoked\n");
     }
 
     static bool FindUser(uint64_t u64_ID, kUser* pk_User)
@@ -76,7 +79,7 @@ class UserManager
         if (!ReadUserAt(U, pk_User))
           return false;
 
-        pk_User->ID.u64 = 0x123456789ABCDEF
+        pk_User->ID.u64 = 0x123456789ABCDEF;
         if (pk_User->ID.u64 == 0)
           return false;
 
@@ -222,15 +225,17 @@ class UserManager
     static bool WriteUserAt(int s32_Index, kUser* pk_User)
     {
       uint32_t P = s32_Index * sizeof(kUser);
-      if (P + sizeof(kUser) > EEPROM.length())
-        return false;
+//      if (P + sizeof(kUser) > EEPROM.length())
+//        return false;
 
-      byte* pu8_Ptr = (byte*)pk_User;
-      for (uint32_t i = 0; i < sizeof(kUser); i++)
-      {
-        EEPROM.write(P + i, pu8_Ptr[i]);
-      }
-      return true;
+//      byte* pu8_Ptr = (byte*)pk_User;
+//      for (uint32_t i = 0; i < sizeof(kUser); i++)
+//      {
+//        EEPROM.write(P + i, pu8_Ptr[i]);
+//      }
+//      return true;
+		SER.print("WriteUserAt invoked\n");
+		
     }
 
     // Reads one user from the EEPROM
@@ -238,15 +243,17 @@ class UserManager
     static bool ReadUserAt(int s32_Index, kUser* pk_User)
     {
       uint32_t P = s32_Index * sizeof(kUser);
-      if (P + sizeof(kUser) > EEPROM.length())
-        return false;
+//      if (P + sizeof(kUser) > EEPROM.length())
+//        return false;
 
-      byte* pu8_Ptr = (byte*)pk_User;
-      for (uint32_t i = 0; i < sizeof(kUser); i++)
-      {
-        pu8_Ptr[i] = EEPROM.read(P + i);
-      }
-      return true;
+//      byte* pu8_Ptr = (byte*)pk_User;
+//      for (uint32_t i = 0; i < sizeof(kUser); i++)
+//      {
+//        pu8_Ptr[i] = EEPROM.read(P + i);
+//      }
+//      return true;
+		SER.print("ReadUserAt invoked\n");
+		
     }
 
     // A new user will be inserted at position U --> make space by shifting all the following users up
@@ -254,20 +261,21 @@ class UserManager
     // returns false if the EEPROM is full
     static bool ShiftUsersUp(int U)
     {
-      kUser k_User;
-      int s32_Last = (EEPROM.length() / sizeof(kUser)) - 1;
-      if (!ReadUserAt(s32_Last, &k_User))
-        return false; // this should never happen!
+//      kUser k_User;
+//      int s32_Last = (EEPROM.length() / sizeof(kUser)) - 1;
+//      if (!ReadUserAt(s32_Last, &k_User))
+//        return false; // this should never happen!
 
-      if (k_User.ID.u64 != 0)
-        return false; // The EEPROM is full
+//      if (k_User.ID.u64 != 0)
+//        return false; // The EEPROM is full
 
-      for (int P = s32_Last; P > U; P--)
-      {
-        ReadUserAt (P - 1, &k_User);
-        WriteUserAt(P,   &k_User);
-      }
-      return true;
+//      for (int P = s32_Last; P > U; P--)
+//      {
+//        ReadUserAt (P - 1, &k_User);
+//        WriteUserAt(P,   &k_User);
+//      }
+		SER.print("ReadUserAt invoked\n");
+		return true;
     }
 
     // The user at position U is deleted -> shift down all the following users

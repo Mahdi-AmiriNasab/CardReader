@@ -157,6 +157,7 @@ public:
     // The Desfire card detects automatically that this 16 byte key is really a simple 8 byte DES key.
     inline int GetKeySize(int s32_MinSize=0) 
     { 
+	
         return max(s32_MinSize, ms32_KeySize); 
     }   
 

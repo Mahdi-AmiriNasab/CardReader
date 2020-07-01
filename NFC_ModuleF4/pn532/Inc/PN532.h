@@ -3,7 +3,7 @@
 #define ADAFRUIT_PN532_H
 
 
-//#include "Utils.h"
+#include "Utils.h"
 #ifndef USE_HAL_DRIVER
 #include "Arduino.h"
 #include <Adafruit_SPIDevice.h>
@@ -24,9 +24,13 @@
 // };
 
 #endif
-#define USE_SOFTWARE_SPI   false   // Visual Studio needs this in upper case
-#define USE_HARDWARE_SPI   false  // Visual Studio needs this in upper case
-#define USE_HARDWARE_I2C   true  // Visual Studio needs this in upper case
+#if !defined (USE_SOFTWARE_SPI)
+    #define USE_SOFTWARE_SPI   false   // Visual Studio needs this in upper case
+#elif !defined (USE_HARDWARE_SPI)
+    #define USE_HARDWARE_SPI   false  // Visual Studio needs this in upper case
+#elif !defined (USE_HARDWARE_I2C)
+    #define USE_HARDWARE_I2C   true  // Visual Studio needs this in upper case
+#endif
 
 #define LF  "\r\n" // LineFeed 
 
@@ -207,7 +211,7 @@ struct kCard
     eCardType e_CardType;    
 };
 
-class PN532
+class PN532 
 {
  public:
     PN532();
@@ -223,7 +227,7 @@ class PN532
     #endif
     
     // Generic PN532 functions
-    PN532(uint8_t irq, uint8_t reset);
+    //PN532(uint8_t irq, uint8_t reset);
     void begin();  
     void SetDebugLevel(byte level);
     bool SamConfig();
@@ -239,6 +243,8 @@ class PN532
             
     // ISO14443A functions
     bool ReadPassiveTargetID(byte* uidBuffer, byte* uidLength, eCardType* pe_CardType);
+	byte mu8_ResetPin;
+    byte mu8_Irq;
 
  protected:	
     // Low Level functions
@@ -256,27 +262,23 @@ class PN532
 
     byte mu8_DebugLevel;   // 0, 1, or 2
     byte mu8_PacketBuffer[PN532_PACKBUFFSIZE];
-
- private:
-	 //#include <defines.h>
     byte mu8_ClkPin;
     byte mu8_MisoPin;  
     byte mu8_MosiPin;  
     byte mu8_SselPin;  
-    byte mu8_ResetPin;
-    byte mu8_Irq;
+   
 };
 
 #endif
-
+/*
 #if USE_HARDWARE_I2C
     // This class implements Hardware I2C (2 wire bus with pull-up resistors). It is not used for the DoorOpener sketch.
     // NOTE: This class is not used when you switched to SPI mode with PN532::InitSoftwareSPI() or PN532::InitHardwareSPI().
-    class I2cClass
+class I2cClass 
     {  
     public:
         // Initialize the I2C pins
-        static inline void Begin() 
+        inline void Begin(void) 
         {
             Wire.begin();
         }
@@ -284,30 +286,31 @@ class PN532
         // Read the requested amount of bytes at once from the I2C bus into an internal buffer.
         // ATTENTION: The Arduino library is extremely primitive. A timeout has not been implemented.
         // When the CLK line is permanently low this function hangs forever!
-        static inline byte RequestFrom(byte u8_Address, byte u8_Quantity)
+        inline byte RequestFrom(byte u8_Address, byte u8_Quantity)
         {
             return Wire.requestFrom(u8_Address, u8_Quantity);
         }
         // Read one byte from the buffer that has been read when calling RequestFrom()
-        static inline int Read()
+        inline int Read(void)
         {
             return Wire.read();
         }
         // --------------------- WRITE -------------------------
         // Initiates a Send transmission
-        static inline void BeginTransmission(byte u8_Address)
+        inline void BeginTransmission(byte u8_Address)
         {
             Wire.beginTransmission(u8_Address);
         }
         // Write one byte to the I2C bus
-        static inline void Write(byte u8_Data)
+        inline void Write(byte u8_Data)
         {
             Wire.write(u8_Data);
         }
         // Ends a Send transmission
-        static inline void EndTransmission()
+        inline void EndTransmission(void)
         {
             Wire.endTransmission();
         }
     };
 #endif
+*/

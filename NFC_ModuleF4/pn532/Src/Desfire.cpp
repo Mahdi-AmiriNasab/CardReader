@@ -89,9 +89,9 @@ bool Desfire::Authenticate(byte u8_KeyNo, DESFireKey* pi_Key)
     byte u8_Command;
     switch (pi_Key->GetKeyType())
     { 
-        case DF_KEY_AES:    u8_Command = DFEV1_INS_AUTHENTICATE_AES; break;
-        case DF_KEY_2K3DES:
-        case DF_KEY_3K3DES: u8_Command = DFEV1_INS_AUTHENTICATE_ISO; break;
+        case DF_KEY_AES:    u8_Command = DFEV1_INS_AUTHENTICATE_AES; SER.println("DF_KEY_AES selected"); break;
+        case DF_KEY_2K3DES: SER.println("DF_KEY_2K3DES selected");
+        case DF_KEY_3K3DES: u8_Command = DFEV1_INS_AUTHENTICATE_ISO; SER.println("DF_KEY_3K3DES selected"); break;
         default:
             SER.print("Invalid key\r\n");
             return false;
