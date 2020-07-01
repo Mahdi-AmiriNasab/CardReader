@@ -1,0 +1,25 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "intelliSenseMode": "msvc-x64",
+            "includePath": [
+                "${default}",
+                "${workspaceFolder}/Inc",
+                "C:\\\\Users\\\\ara22\\\\Desktop\\\\CardReader\\\\NFC_ModuleF4\\\\pn532\\\\Inc"
+                ,"C:\\\\Users\\\\ara22\\\\Desktop\\\\CardReader\\\\NFC_ModuleF4\\\\pn532\\Inc"
+            ],
+            "browse": {
+                "path": [
+                    
+                ]
+            }
+        }
+    ],
+    "version": 4
+}

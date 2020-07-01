@@ -50,16 +50,16 @@
 #include "Adafruit_PN532.h"
 
 #ifndef  USE_HAL_DRIVER
-#include "Arduino.h"
+	#include "Arduino.h"
+	#include <Wire.h>
+	
+	#ifdef __SAM3X8E__ // arduino due
+		#define WIRE Wire1
+	#else
+		#define WIRE Wire
+	#endif
 
-#include <Wire.h>
-#ifdef __SAM3X8E__ // arduino due
-#define WIRE Wire1
-#else
-#define WIRE Wire
-#endif
-
-#include <SPI.h>
+	#include <SPI.h>
 
 #else
 /***********Includes***********/
@@ -289,7 +289,8 @@ bool Adafruit_PN532::begin() {
 		HAL_GPIO_WritePin(reset_port, reset_pin, GPIO_PIN_RESET);
 		HAL_Delay(400);
 		HAL_GPIO_WritePin(reset_port, reset_pin, GPIO_PIN_SET);
-		HAL_Delay(10);// Small delay required before taking other actions after reset.
+		HAL_Delay(10);
+		// Small delay required before taking other actions after reset.
 									// See timing diagram on page 209 of the datasheet, section 12.23.
 		
 			return true;
