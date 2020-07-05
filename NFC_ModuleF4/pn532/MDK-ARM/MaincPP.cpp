@@ -563,16 +563,26 @@ int main(void)
 		kUser k_User;
         kCard k_Card;
 		uint8_t u8_Version;
+		uint32_t AppID[30];
+		uint8_t AppCount;
+		DESFireCardVersion CardDetails;
+		DESFireKeySettings KeySettings;
+		
+		
         if (ReadCard(k_User.ID.u8, &k_Card))
         {
-			if (rfid.GetKeyVersion(0, &u8_Version))
-				SER.println("Version key is available");
-			else
-				SER.println("field to get Version key");
-
 			if (AuthenticatePICC(&k_Card.u8_KeyVersion))
 			{
 				SER.println("Authentication successfully");
+				
+				if(rfid.GetCardVersion(&CardDetails))
+					;
+//					if(rfid.FormatCard())
+//					{
+//						rfid.CreateApplication(0x00DE24 , KS_CHANGE_KEY_WITH_MK, 2 , DF_KEY_3K3DES);
+//						rfid.GetApplicationIDs(AppID ,&AppCount);
+//					}
+				
 			}
 			uint32_t IDlist[30];
 			uint8_t AppCount;
@@ -583,16 +593,23 @@ int main(void)
 //				SER.println("application created");
 //			}
 //			
-			DESFireFilePermissions permissions;			
-			permissions.e_ChangeAccess = AR_FREE;
-			permissions.e_ReadAccess = AR_FREE;
-			permissions.e_ReadAndWriteAccess = AR_FREE;
-			permissions.e_WriteAccess = AR_FREE;
-			
-		 if (rfid.SelectApplication(0x00000A))
-				SER.println("application selected");
-		 if(rfid.CreateStdDataFile(0x01, &permissions ,0x0a))
-				SER.println("datafile created");
+//			DESFireFilePermissions permissions;			
+//			permissions.e_ChangeAccess = AR_FREE;
+//			permissions.e_ReadAccess = AR_FREE;
+//			permissions.e_ReadAndWriteAccess = AR_FREE;
+//			permissions.e_WriteAccess = AR_FREE;
+//			
+		 if (rfid.SelectApplication(0x00DE24))
+		 {
+			SER.println("application selected");
+			if (!rfid.Authenticate(0, &rfid.DES2_DEFAULT_KEY))
+				return false;
+			SER.print("Athentication has done in key version which set default by factory");
+
+    
+		 }
+//		 if(rfid.CreateStdDataFile(0x01, &permissions ,0x0a))
+//				SER.println("datafile created");
 
 //			rfid.GetApplicationIDs(IDlist ,&AppCount);
 //			DESFireFileSettings settings;
