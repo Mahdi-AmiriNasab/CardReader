@@ -562,30 +562,37 @@ int main(void)
 		while(!HAL_GPIO_ReadPin(Button_Blue_GPIO_Port, Button_Blue_Pin));
 		kUser k_User;
         kCard k_Card;
-		uint8_t u8_Version;
-		uint32_t AppID[30];
-		uint8_t AppCount;
+		uint8_t u8_Version ,key_version ,key_number;
+		uint32_t AppID[30], IDlist[30];
+		uint8_t app_count ,key_count ,file_count ,file_id;
 		DESFireCardVersion CardDetails;
 		DESFireKeySettings KeySettings;
+		DESFireKeyType KeyType;
 		
 		
         if (ReadCard(k_User.ID.u8, &k_Card))
         {
-			if (AuthenticatePICC(&k_Card.u8_KeyVersion))
+			//if (AuthenticatePICC(&k_Card.u8_KeyVersion))
+			
+			rfid.GetCardVersion(&CardDetails);
+			rfid.GetApplicationIDs(IDlist ,&app_count);
+			if(rfid.SelectApplication(0x00000000))//PICC level
 			{
-				SER.println("Authentication successfully");
-				
-				if(rfid.GetCardVersion(&CardDetails))
-					;
+				rfid.GetFileIDs(&file_id ,&file_count);
+				rfid.GetKeySettings(&KeySettings, &key_count, &KeyType);
+				rfid.GetKeyVersion(0 ,&key_version);
+			}
+			while(!HAL_GPIO_ReadPin(Button_Blue_GPIO_Port, Button_Blue_Pin));
+			StoreDesfireSecret(&k_User);
+				//rfid.ChangeKeySettings(
 //					if(rfid.FormatCard())
 //					{
-//						rfid.CreateApplication(0x00DE24 , KS_CHANGE_KEY_WITH_MK, 2 , DF_KEY_3K3DES);
+					//rfid.CreateApplication(0x00DE24 , KS_CHANGE_KEY_WITH_MK, 2 , DF_KEY_3K3DES);
 //						rfid.GetApplicationIDs(AppID ,&AppCount);
 //					}
 				
-			}
-			uint32_t IDlist[30];
-			uint8_t AppCount;
+			
+			
 		
 			
 //			if(rfid.CreateApplication(0x000A, KS_CREATE_DELETE_WITHOUT_MK, 1, DF_KEY_3K3DES))
@@ -599,15 +606,15 @@ int main(void)
 //			permissions.e_ReadAndWriteAccess = AR_FREE;
 //			permissions.e_WriteAccess = AR_FREE;
 //			
-		 if (rfid.SelectApplication(0x00DE24))
-		 {
-			SER.println("application selected");
-			if (!rfid.Authenticate(0, &rfid.DES2_DEFAULT_KEY))
-				return false;
-			SER.print("Athentication has done in key version which set default by factory");
+//		 if (rfid.SelectApplication(0x00DE24))
+//		 {
+//			SER.println("application selected");
+//			if (!rfid.Authenticate(0, &rfid.DES2_DEFAULT_KEY))
+//				return false;
+//			SER.print("Athentication has done in key version which set default by factory");
 
-    
-		 }
+//    
+//		 }
 //		 if(rfid.CreateStdDataFile(0x01, &permissions ,0x0a))
 //				SER.println("datafile created");
 
