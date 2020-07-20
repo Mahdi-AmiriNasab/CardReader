@@ -135,6 +135,7 @@
 #define PN532_COMMAND_TGGETTARGETSTATUS     (0x8A)
 
 #define PN532_WAKEUP                        (0x55)
+#define PN532_WAKEUP_ENABLE_ALL_SOURCES     (0xFB)
 
 #define PN532_SPI_STATUSREAD                (0x02)
 #define PN532_SPI_DATAWRITE                 (0x01)
@@ -240,7 +241,8 @@ class PN532
 
     // This function is overridden in Desfire.cpp
     virtual bool SwitchOffRfField();
-            
+	bool PowerDown();
+	
     // ISO14443A functions
     bool ReadPassiveTargetID(byte* uidBuffer, byte* uidLength, eCardType* pe_CardType);
 	byte mu8_ResetPin;

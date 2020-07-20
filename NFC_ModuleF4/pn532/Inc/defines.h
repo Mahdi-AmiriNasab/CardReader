@@ -105,6 +105,8 @@ inline void DBG::printHex32(uint32_t u32_Data, const char* s8_LF = 0) // =NULL
 // If the parameters s32_Brace1, s32_Brace2 are -1, they do not appear
 inline void DBG::printHexBuf(const byte* u8_Data, const uint32_t u32_DataLen, const char* s8_LF = 0, int s32_Brace1 = 0, int s32_Brace2 = 0)
 {
+	if (s32_Brace2 == 0)
+		s32_Brace2  = u32_DataLen;
     for (uint32_t i=0; i < u32_DataLen; i++)
     {
         if ((int)i == s32_Brace1)
