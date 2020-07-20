@@ -594,8 +594,8 @@ int main(void)
 //			StoreDesfireSecret(&k_User);
 			do
 			{
-				byte u8_StoreValue[16]="ARA AVL";
-				if (!GenerateDesfireSecrets(&k_User, &i_AppMasterKey, u8_StoreValue))
+				byte to_save[16]="123456789ABCDEF";
+				if (!GenerateDesfireSecrets(&k_User, &i_AppMasterKey, to_save))
 					break;
 
 				// First delete the application (The current application master key may have changed after changing the user name for that card)
@@ -620,9 +620,11 @@ int main(void)
 					break;
 				
 				// Write the StoreValue into that file
-				if (!rfid.WriteFileData(CARD_FILE_ID, 0, 16, u8_StoreValue))
+				if (!rfid.WriteFileData(CARD_FILE_ID, 0, 16, to_save))
 					break; 
 			}while(0);
+			rfid.PowerDown();
+			break;
 			//rfid.ChangeKeySettings(
 //					if(rfid.FormatCard())
 //					{
@@ -717,6 +719,7 @@ int main(void)
 	HAL_GPIO_WritePin(GPIOD , GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
 	
 	}	
+	SER.println("Program has terminated. reset the chip");
   /* USER CODE END 3 */
 }
 

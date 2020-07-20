@@ -302,6 +302,26 @@ bool PN532::SwitchOffRfField()
     return true;
 }
 
+bool PN532::PowerDown() 
+{
+    if (mu8_DebugLevel > 0) SER.print("\r\n*** PowerDown()\r\n");
+  
+    mu8_PacketBuffer[0] = PN532_COMMAND_POWERDOWN;
+    mu8_PacketBuffer[1] = PN532_WAKEUP_ENABLE_ALL_SOURCES;
+    
+    if (!SendCommandCheckAck(mu8_PacketBuffer, 2))
+        return false;
+  
+    byte len = ReadData(mu8_PacketBuffer, 9);
+    if (len != 3 || mu8_PacketBuffer[1] != PN532_COMMAND_POWERDOWN + 1)
+    {
+        SER.print("PowerDown failed\r\n");
+        return false;
+    }
+	SER.print("PowerDown successful\r\n");
+    return true;
+}
+
 /**************************************************************************/
 /*!
     Writes an 8-bit value that sets the state of the PN532's GPIO pins
