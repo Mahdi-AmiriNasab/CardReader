@@ -34,8 +34,12 @@
         #define DEFAULT_APP_KEY    rfid.AES_DEFAULT_KEY
     #else
         #define DESFIRE_KEY_TYPE   DES
-        #define DEFAULT_APP_KEY    rfid.DES3_DEFAULT_KEY
-    #endif
+		#ifdef KEY_24
+			#define DEFAULT_APP_KEY    rfid.DES3_DEFAULT_KEY
+		#else
+			#define DEFAULT_APP_KEY    rfid.DES2_DEFAULT_KEY
+		#endif
+	#endif
     
     #include "Desfire.h"
     #include "Secrets.h"
@@ -165,9 +169,12 @@ bool GenerateDesfireSecrets(kUser* pk_User, DESFireKey* pi_AppMasterKey, byte u8
         u8_Data[B++] ^= pk_User->s8_Name[N];
         if (B > 15) B = 0; // Fill the first 16 bytes of u8_Data, the rest remains zero.
     }
-
+	
+	#ifdef KEY_24
     byte u8_AppMasterKey[24];
-
+	#else
+	byte u8_AppMasterKey[16];
+	#endif
     DES i_3KDes;
     if (!i_3KDes.SetKeyData(SECRET_APPLICATION_KEY, sizeof(SECRET_APPLICATION_KEY), 0) || // set a 24 byte key (168 bit)
         !i_3KDes.CryptDataCBC(CBC_SEND, KEY_ENCIPHER, u8_AppMasterKey, u8_Data, 24))
@@ -562,7 +569,9 @@ int main(void)
 	uint8_t app_count ,key_count ,file_count ,file_id;
 	DESFireCardVersion CardDetails;
 	DESFireKeySettings KeySettings;
+	DESFireFileSettings FileSetting;
 	DESFireKeyType KeyType;
+	
 	DESFIRE_KEY_TYPE i_AppMasterKey;
 	
 	// Create Standard Data File with 16 bytes length
@@ -571,7 +580,7 @@ int main(void)
     k_Permis.e_WriteAccess        = AR_KEY0;
     k_Permis.e_ReadAndWriteAccess = AR_KEY0;
     k_Permis.e_ChangeAccess       = AR_KEY0;
-	
+		
 	
 	while(1)
 	{
@@ -594,17 +603,18 @@ int main(void)
 //			StoreDesfireSecret(&k_User);
 			do
 			{
-				byte to_save[16]="123456789ABCDEF";
+				byte to_save[17]={'m', 'a' ,'h', 'd' ,'i', '-' ,'a', 'm' ,'i', 'i' ,'r', 'i' ,'n', 'a' ,'s', 'a' ,'b'};
+				byte u8_AppMasterKey[24]="0123456789ABCDEF";
 				if (!GenerateDesfireSecrets(&k_User, &i_AppMasterKey, to_save))
 					break;
-
+				
 				// First delete the application (The current application master key may have changed after changing the user name for that card)
 				if (!rfid.DeleteApplicationIfExists(CARD_APPLICATION_ID))
 					break;
 				
 				// Create the new application with default settings (we must still have permission to change the application master key later)
-				//if (!rfid.CreateApplication(CARD_APPLICATION_ID, KS_FACTORY_DEFAULT, 1, i_AppMasterKey.GetKeyType()))
-				if (!rfid.CreateApplication(CARD_APPLICATION_ID, KS_FACTORY_DEFAULT, 1, DF_KEY_2K3DES))
+				if (!rfid.CreateApplication(CARD_APPLICATION_ID, KS_FACTORY_DEFAULT, 5, i_AppMasterKey.GetKeyType()))
+				//if (!rfid.CreateApplication(CARD_APPLICATION_ID, KS_FACTORY_DEFAULT, 5, DF_KEY_2K3DES))
 					break;
 				
 				// After this command all the following commands will apply to the application (rather than the PICC)
@@ -612,16 +622,19 @@ int main(void)
 					break;
 				
 				// Authentication with the application's master key is required
-				// if (!rfid.Authenticate(0, &DEFAULT_APP_KEY))
-				if (!rfid.Authenticate(0, &rfid.DES2_DEFAULT_KEY))
+				if (!rfid.Authenticate(0, &DEFAULT_APP_KEY))
+				//if (!rfid.Authenticate(0, &rfid.DES2_DEFAULT_KEY))
 					break;   
 				
 				if (!rfid.CreateStdDataFile(CARD_FILE_ID, &k_Permis, 16))
 					break;
 				
+				if (!rfid.GetFileSettings(0 ,&FileSetting))
+					break;
 				// Write the StoreValue into that file
 				if (!rfid.WriteFileData(CARD_FILE_ID, 0, 16, to_save))
 					break; 
+				
 			}while(0);
 			rfid.PowerDown();
 			break;
