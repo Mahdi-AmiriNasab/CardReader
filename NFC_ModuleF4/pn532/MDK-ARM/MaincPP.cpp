@@ -259,7 +259,8 @@ bool StoreDesfireSecret(kUser* pk_User)
         return false;
 
     // Create the new application with default settings (we must still have permission to change the application master key later)
-    if (!rfid.CreateApplication(CARD_APPLICATION_ID, KS_FACTORY_DEFAULT, 1, i_AppMasterKey.GetKeyType()))
+    //if (!rfid.CreateApplication(CARD_APPLICATION_ID, KS_FACTORY_DEFAULT, 1, i_AppMasterKey.GetKeyType()))
+	if (!rfid.CreateApplication(CARD_APPLICATION_ID, KS_FACTORY_DEFAULT, 1, DF_KEY_2K3DES))
         return false;
 
     // After this command all the following commands will apply to the application (rather than the PICC)
@@ -267,8 +268,9 @@ bool StoreDesfireSecret(kUser* pk_User)
         return false;
 
     // Authentication with the application's master key is required
-    if (!rfid.Authenticate(0, &DEFAULT_APP_KEY))
-        return false;
+   // if (!rfid.Authenticate(0, &DEFAULT_APP_KEY))
+	if (!rfid.Authenticate(0, &rfid.DES2_DEFAULT_KEY))
+		return false;
 
     // Change the master key of the application
     if (!rfid.ChangeKey(0, &i_AppMasterKey, NULL))
@@ -553,6 +555,22 @@ int main(void)
 			SER.print("FAILD");
 		}
 	}while(!config);
+	kUser k_User;
+	kCard k_Card;
+	uint8_t u8_Version ,key_version ,key_number;
+	uint32_t AppID[30], IDlist[30];
+	uint8_t app_count ,key_count ,file_count ,file_id;
+	DESFireCardVersion CardDetails;
+	DESFireKeySettings KeySettings;
+	DESFireKeyType KeyType;
+	DESFIRE_KEY_TYPE i_AppMasterKey;
+	
+	// Create Standard Data File with 16 bytes length
+    DESFireFilePermissions k_Permis;
+    k_Permis.e_ReadAccess         = AR_KEY0;
+    k_Permis.e_WriteAccess        = AR_KEY0;
+    k_Permis.e_ReadAndWriteAccess = AR_KEY0;
+    k_Permis.e_ChangeAccess       = AR_KEY0;
 	
 	
 	while(1)
@@ -560,31 +578,52 @@ int main(void)
 	/* USER CODE END WHILE */
 	/* USER CODE BEGIN 3 */
 		while(!HAL_GPIO_ReadPin(Button_Blue_GPIO_Port, Button_Blue_Pin));
-		kUser k_User;
-        kCard k_Card;
-		uint8_t u8_Version ,key_version ,key_number;
-		uint32_t AppID[30], IDlist[30];
-		uint8_t app_count ,key_count ,file_count ,file_id;
-		DESFireCardVersion CardDetails;
-		DESFireKeySettings KeySettings;
-		DESFireKeyType KeyType;
-		
-		
+
         if (ReadCard(k_User.ID.u8, &k_Card))
         {
-			//if (AuthenticatePICC(&k_Card.u8_KeyVersion))
+			if (AuthenticatePICC(&k_Card.u8_KeyVersion));
 			
-			rfid.GetCardVersion(&CardDetails);
-			rfid.GetApplicationIDs(IDlist ,&app_count);
-			if(rfid.SelectApplication(0x00000000))//PICC level
+//			rfid.GetCardVersion(&CardDetails);
+//			rfid.GetApplicationIDs(IDlist ,&app_count);
+//			if(rfid.SelectApplication(0x00000000))//PICC level
+//			{
+//				rfid.GetFileIDs(&file_id ,&file_count);
+//				rfid.GetKeySettings(&KeySettings, &key_count, &KeyType);
+//				rfid.GetKeyVersion(0 ,&key_version);
+//			}
+//			StoreDesfireSecret(&k_User);
+			do
 			{
-				rfid.GetFileIDs(&file_id ,&file_count);
-				rfid.GetKeySettings(&KeySettings, &key_count, &KeyType);
-				rfid.GetKeyVersion(0 ,&key_version);
-			}
-			while(!HAL_GPIO_ReadPin(Button_Blue_GPIO_Port, Button_Blue_Pin));
-			StoreDesfireSecret(&k_User);
-				//rfid.ChangeKeySettings(
+				byte u8_StoreValue[16]="ARA AVL";
+				if (!GenerateDesfireSecrets(&k_User, &i_AppMasterKey, u8_StoreValue))
+					break;
+
+				// First delete the application (The current application master key may have changed after changing the user name for that card)
+				if (!rfid.DeleteApplicationIfExists(CARD_APPLICATION_ID))
+					break;
+				
+				// Create the new application with default settings (we must still have permission to change the application master key later)
+				//if (!rfid.CreateApplication(CARD_APPLICATION_ID, KS_FACTORY_DEFAULT, 1, i_AppMasterKey.GetKeyType()))
+				if (!rfid.CreateApplication(CARD_APPLICATION_ID, KS_FACTORY_DEFAULT, 1, DF_KEY_2K3DES))
+					break;
+				
+				// After this command all the following commands will apply to the application (rather than the PICC)
+				if (!rfid.SelectApplication(CARD_APPLICATION_ID))
+					break;
+				
+				// Authentication with the application's master key is required
+				// if (!rfid.Authenticate(0, &DEFAULT_APP_KEY))
+				if (!rfid.Authenticate(0, &rfid.DES2_DEFAULT_KEY))
+					break;   
+				
+				if (!rfid.CreateStdDataFile(CARD_FILE_ID, &k_Permis, 16))
+					break;
+				
+				// Write the StoreValue into that file
+				if (!rfid.WriteFileData(CARD_FILE_ID, 0, 16, u8_StoreValue))
+					break; 
+			}while(0);
+			//rfid.ChangeKeySettings(
 //					if(rfid.FormatCard())
 //					{
 					//rfid.CreateApplication(0x00DE24 , KS_CHANGE_KEY_WITH_MK, 2 , DF_KEY_3K3DES);
@@ -739,7 +778,7 @@ static void MX_I2C1_Init(void)
 
   /* USER CODE END I2C1_Init 1 */
   hi2c1.Instance = I2C1;
-  hi2c1.Init.ClockSpeed = 1000;
+  hi2c1.Init.ClockSpeed = 100000;
   hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
   hi2c1.Init.OwnAddress1 = 0;
   hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;

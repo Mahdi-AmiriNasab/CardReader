@@ -176,7 +176,7 @@ void PN532::begin()
         if (mu8_DebugLevel > 1)
         {
             SER.print("Send WakeUp packet: ");
-           // SER.printHexBuf(u8_Buffer, sizeof(u8_Buffer), LF);
+            SER.printHexBuf(u8_Buffer, sizeof(u8_Buffer), LF);
         }
     }
     #elif USE_HARDWARE_I2C
@@ -433,7 +433,7 @@ bool PN532::ReadPassiveTargetID(byte* u8_UidBuffer, byte* pu8_UidLength, eCardTy
     if (mu8_DebugLevel > 0)
     {
         SER.print("Card UID:    ");
-       // SER.printHexBuf(u8_UidBuffer, u8_IdLength, LF);
+        SER.printHexBuf(u8_UidBuffer, u8_IdLength, LF);
 
         // Examples:              ATQA    SAK  UID length
         // MIFARE Mini            00 04   09   4 bytes
@@ -662,7 +662,7 @@ bool PN532::IsReady()
         if (mu8_DebugLevel > 2)
         {
             SER.print("IsReady(): read ");
-           // SER.printHex8(u8_Ready, LF);
+            SER.printHex8(u8_Ready, LF);
         }
     
         digitalWrite(mu8_SselPin, HIGH);
@@ -673,11 +673,11 @@ bool PN532::IsReady()
     #elif USE_HARDWARE_I2C
     { 
 
-        #ifdef USE_HAL_DRIVER	
+        #ifdef USE_HARDWARE_RD_PIN
             // I2C check if status is ready by IRQ line being pulled low.
             uint8_t x = digitalRead(mu8_Irq);
             return x == 0;
-        #else
+        #elif USE_SOFTWARE_RD_PIN	
             // After reading this byte, the bus must be released with a Stop condition
             I2cClass::RequestFrom((byte)PN532_I2C_ADDRESS, (byte)1);
 
@@ -686,7 +686,7 @@ bool PN532::IsReady()
             if (mu8_DebugLevel > 2)
             {
                 SER.print("IsReady(): read ");
-                //SER.printHex8(u8_Ready, LF);
+                SER.printHex8(u8_Ready, LF);
             }        
             
             return u8_Ready == PN532_I2C_READY; // 0x01
@@ -765,7 +765,7 @@ void PN532::WriteCommand(byte* cmd, byte cmdlen)
     if (mu8_DebugLevel > 1)
     {
         SER.print("Sending:  ");
-       // SER.printHexBuf(TxBuffer, P, LF, 5, cmdlen + 6);
+        SER.printHexBuf(TxBuffer, P, LF, 5, cmdlen + 6);
     }
 }
 
@@ -821,7 +821,7 @@ bool PN532::ReadAck()
     if (mu8_DebugLevel > 2)
     {
         SER.print("Read ACK: ");
-       // SER.printHexBuf(ackbuff, sizeof(ackbuff), LF);
+        SER.printHexBuf(ackbuff, sizeof(ackbuff), LF);
     }
     
     if (memcmp(ackbuff, Ack, sizeof(Ack)) != 0)
@@ -938,7 +938,7 @@ byte PN532::ReadData(byte* buff, byte len)
     if (mu8_DebugLevel > 1)
     {
         SER.print("Response: ");
-        //SER.printHexBuf(RxBuffer, len, LF, Brace1, Brace2);
+        SER.printHexBuf(RxBuffer, len, LF, Brace1, Brace2);
     }
     
     if (Error)
@@ -991,7 +991,7 @@ bool PN532::ReadPacket(byte* buff, byte len)
         if (mu8_DebugLevel > 2)
         {
             SER.print("ReadPacket(): read ");
-           // SER.printHex8(u8_Ready, LF);
+            SER.printHex8(u8_Ready, LF);
         }        
         
         for (byte i=0; i<len; i++) 

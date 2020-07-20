@@ -25,6 +25,10 @@
 #if USE_HARDWARE_SPI
     #include <SPI.h>  // Hardware SPI bus
 #elif USE_HARDWARE_I2C
+	#define USE_SOFTWARE_RD_PIN true
+		#if !(USE_SOFTWARE_RD_PIN)
+		#define USE_HARDWARE_RD_PIN true
+		#endif
     #include <Wire_a.h> // Hardware I2C bus
 #elif USE_SOFTWARE_SPI
     // no #include required
