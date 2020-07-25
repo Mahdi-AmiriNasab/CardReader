@@ -266,8 +266,8 @@ bool StoreDesfireSecret(kUser* pk_User)
         return false;
 
     // Create the new application with default settings (we must still have permission to change the application master key later)
-    //if (!rfid.CreateApplication(CARD_APPLICATION_ID, KS_FACTORY_DEFAULT, 1, i_AppMasterKey.GetKeyType()))
-	if (!rfid.CreateApplication(CARD_APPLICATION_ID, KS_FACTORY_DEFAULT, 1, DF_KEY_2K3DES))
+    if (!rfid.CreateApplication(CARD_APPLICATION_ID, KS_FACTORY_DEFAULT, 1, i_AppMasterKey.GetKeyType()))
+	//if (!rfid.CreateApplication(CARD_APPLICATION_ID, KS_FACTORY_DEFAULT, 1, DF_KEY_2K3DES))
         return false;
 
     // After this command all the following commands will apply to the application (rather than the PICC)
@@ -275,8 +275,8 @@ bool StoreDesfireSecret(kUser* pk_User)
         return false;
 
     // Authentication with the application's master key is required
-   // if (!rfid.Authenticate(0, &DEFAULT_APP_KEY))
-	if (!rfid.Authenticate(0, &rfid.DES2_DEFAULT_KEY))
+    if (!rfid.Authenticate(0, &DEFAULT_APP_KEY))
+	//if (!rfid.Authenticate(0, &rfid.DES2_DEFAULT_KEY))
 		return false;
 
     // Change the master key of the application
@@ -290,8 +290,8 @@ bool StoreDesfireSecret(kUser* pk_User)
     // After this command the application's master key and it's settings will be frozen. They cannot be changed anymore.
     // To read or enumerate any content (files) in the application the application master key will be required.
     // Even if someone knows the PICC master key, he will neither be able to read the data in this application nor to change the app master key.
-    if (!rfid.ChangeKeySettings(KS_CHANGE_KEY_FROZEN))
-        return false;
+//    if (!rfid.ChangeKeySettings(KS_CHANGE_KEY_FROZEN))
+//        return false;
 
     // --------------------------------------------
 
@@ -588,10 +588,11 @@ int main(void)
 	/* USER CODE BEGIN 3 */
 		while(!HAL_GPIO_ReadPin(Button_Blue_GPIO_Port, Button_Blue_Pin));
 
-        if (ReadCard(k_User.ID.u8, &k_Card))
+        if (1/*ReadCard(k_User.ID.u8, &k_Card) && k_Card.u8_UidLength > 4*/)
         {
-			if (AuthenticatePICC(&k_Card.u8_KeyVersion));
+			//if (AuthenticatePICC(&k_Card.u8_KeyVersion));
 			
+			rfid.Selftest();
 //			rfid.GetCardVersion(&CardDetails);
 //			rfid.GetApplicationIDs(IDlist ,&app_count);
 //			if(rfid.SelectApplication(0x00000000))//PICC level
@@ -601,43 +602,49 @@ int main(void)
 //				rfid.GetKeyVersion(0 ,&key_version);
 //			}
 //			StoreDesfireSecret(&k_User);
-			do
-			{
-				byte to_save[17]={'m', 'a' ,'h', 'd' ,'i', '-' ,'a', 'm' ,'i', 'i' ,'r', 'i' ,'n', 'a' ,'s', 'a' ,'b'};
-				byte u8_AppMasterKey[24]="0123456789ABCDEF";
-				if (!GenerateDesfireSecrets(&k_User, &i_AppMasterKey, to_save))
-					break;
-				
-				// First delete the application (The current application master key may have changed after changing the user name for that card)
-				if (!rfid.DeleteApplicationIfExists(CARD_APPLICATION_ID))
-					break;
-				
-				// Create the new application with default settings (we must still have permission to change the application master key later)
-				if (!rfid.CreateApplication(CARD_APPLICATION_ID, KS_FACTORY_DEFAULT, 5, i_AppMasterKey.GetKeyType()))
-				//if (!rfid.CreateApplication(CARD_APPLICATION_ID, KS_FACTORY_DEFAULT, 5, DF_KEY_2K3DES))
-					break;
-				
-				// After this command all the following commands will apply to the application (rather than the PICC)
-				if (!rfid.SelectApplication(CARD_APPLICATION_ID))
-					break;
-				
-				// Authentication with the application's master key is required
-				if (!rfid.Authenticate(0, &DEFAULT_APP_KEY))
-				//if (!rfid.Authenticate(0, &rfid.DES2_DEFAULT_KEY))
-					break;   
-				
-				if (!rfid.CreateStdDataFile(CARD_FILE_ID, &k_Permis, 16))
-					break;
-				
-				if (!rfid.GetFileSettings(0 ,&FileSetting))
-					break;
-				// Write the StoreValue into that file
-				if (!rfid.WriteFileData(CARD_FILE_ID, 0, 16, to_save))
-					break; 
-				
-			}while(0);
-			rfid.PowerDown();
-			break;
+//			do
+//			{
+//				byte to_save[17]={'m', 'a' ,'h', 'd' ,'i', '-' ,'a', 'm' ,'i', 'i' ,'r', 'i' ,'n', 'a' ,'s', 'a' ,'b'};
+//				byte u8_AppMasterKey[24]="0123456789ABCDEF";
+//				if (!GenerateDesfireSecrets(&k_User, &i_AppMasterKey, to_save))
+//					break;
+//				
+//				// First delete the application (The current application master key may have changed after changing the user name for that card)
+//				if (!rfid.DeleteApplicationIfExists(CARD_APPLICATION_ID))
+//					break;
+//				
+//				// Create the new application with default settings (we must still have permission to change the application master key later)
+//				if (!rfid.CreateApplication(CARD_APPLICATION_ID, KS_FACTORY_DEFAULT, 5, i_AppMasterKey.GetKeyType()))
+//				//if (!rfid.CreateApplication(CARD_APPLICATION_ID, KS_FACTORY_DEFAULT, 5, DF_KEY_2K3DES))
+//					break;
+//				
+//				// After this command all the following commands will apply to the application (rather than the PICC)
+//				if (!rfid.SelectApplication(CARD_APPLICATION_ID))
+//					break;
+//				
+//				// Authentication with the application's master key is required
+//				if (!rfid.Authenticate(0, &DEFAULT_APP_KEY))
+//				//if (!rfid.Authenticate(0, &rfid.DES2_DEFAULT_KEY))
+//					break;   
+//				if(!rfid.GetKeySettings(&KeySettings,&key_count ,&KeyType))
+//					break;
+//				if(!rfid.ChangeKeySettings((DESFireKeySettings)0x0D))
+//					break;
+//				if(!rfid.GetKeySettings(&KeySettings,&key_count ,&KeyType))
+//					break;
+//				if(!rfid.ChangeKeySettings(KS_FACTORY_DEFAULT))
+//					break;
+//				if (!rfid.CreateStdDataFile(CARD_FILE_ID, &k_Permis, 16))
+//					break;
+//				if (!rfid.GetFileSettings(0 ,&FileSetting))
+//					break;
+//				// Write the StoreValue into that file
+//				if (!rfid.WriteFileData(CARD_FILE_ID, 0, 16, to_save))
+//					break; 
+//				
+//			}while(0);
+//			rfid.PowerDown();
+//			break;
 			//rfid.ChangeKeySettings(
 //					if(rfid.FormatCard())
 //					{
@@ -686,6 +693,11 @@ int main(void)
             else if (k_Card.b_PN532_Error) // Another error from PN532 -> reset the chip
             {
                 SER.println("Another error from PN532 -> reset the chip");
+				
+            }
+			else if (!(k_Card.u8_UidLength > 4))
+			{
+				SER.println("The card is not a DESFire card");
             }
             else // e.g. Error while authenticating with master key
             {
@@ -701,6 +713,8 @@ int main(void)
 				if(RestoreDesfireCard())
 					SER.println("The card suuccessfully restored");
 			}
+			rfid.PowerDown();
+			break;
 		}
 		
 		

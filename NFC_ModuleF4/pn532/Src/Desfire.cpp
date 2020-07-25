@@ -147,8 +147,8 @@ bool Desfire::Authenticate(byte u8_KeyNo, DESFireKey* pi_Key)
         SER.print("* RndAB_enc: ");
         SER.printHexBuf(i_RndAB_enc,  2*s32_RandomSize, LF);
     }
-
-    byte u8_RndA_enc[16]; // encrypted random A
+	
+    byte u8_RndA_enc[16]; // encrypted random A 
     s32_Read = DataExchange(DF_INS_ADDITIONAL_FRAME, &i_RndAB_enc, u8_RndA_enc, s32_RandomSize, &e_Status, MAC_None);
     if (e_Status != ST_Success || s32_Read != s32_RandomSize)
     {
@@ -1376,10 +1376,10 @@ bool Desfire::Selftest()
     if (!Authenticate(0, &DES2_DEFAULT_KEY))
         return false;
 
-    // Get the Desfire card version
-    DESFireCardVersion k_Version;
-    if (!GetCardVersion(&k_Version))
-        return false;
+//    // Get the Desfire card version
+//    DESFireCardVersion k_Version;
+//    if (!GetCardVersion(&k_Version))
+//        return false;
 
     // Delete all applications and all their files
     if (!FormatCard())
