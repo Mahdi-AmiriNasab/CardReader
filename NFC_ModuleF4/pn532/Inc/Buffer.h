@@ -44,6 +44,8 @@ class RxBuffer
 public:
     inline RxBuffer(byte* u8_Buffer, int s32_Size) 
     { 
+//		if(s32_Size < 100)
+//			s32_Size = 100;
         mu8_Buf   = u8_Buffer;
         ms32_Size = s32_Size;
         ms32_Pos  = 0;        
@@ -150,6 +152,8 @@ class TxBuffer
 public:
     inline TxBuffer(byte* u8_Buffer, int s32_Size) 
     { 
+//		if(s32_Size < 100)
+//			s32_Size = 100;
         mu8_Buf   = u8_Buffer;
         ms32_Size = s32_Size;
         ms32_Pos  = 0;        

@@ -588,11 +588,11 @@ int main(void)
 	/* USER CODE BEGIN 3 */
 		while(!HAL_GPIO_ReadPin(Button_Blue_GPIO_Port, Button_Blue_Pin));
 
-        if (1/*ReadCard(k_User.ID.u8, &k_Card) && k_Card.u8_UidLength > 4*/)
+        if (ReadCard(k_User.ID.u8, &k_Card) && k_Card.u8_UidLength > 4)
         {
-			//if (AuthenticatePICC(&k_Card.u8_KeyVersion));
+			if (AuthenticatePICC(&k_Card.u8_KeyVersion));
 			
-			rfid.Selftest();
+		//	rfid.Selftest();
 //			rfid.GetCardVersion(&CardDetails);
 //			rfid.GetApplicationIDs(IDlist ,&app_count);
 //			if(rfid.SelectApplication(0x00000000))//PICC level
@@ -601,50 +601,44 @@ int main(void)
 //				rfid.GetKeySettings(&KeySettings, &key_count, &KeyType);
 //				rfid.GetKeyVersion(0 ,&key_version);
 //			}
-//			StoreDesfireSecret(&k_User);
-//			do
-//			{
-//				byte to_save[17]={'m', 'a' ,'h', 'd' ,'i', '-' ,'a', 'm' ,'i', 'i' ,'r', 'i' ,'n', 'a' ,'s', 'a' ,'b'};
-//				byte u8_AppMasterKey[24]="0123456789ABCDEF";
-//				if (!GenerateDesfireSecrets(&k_User, &i_AppMasterKey, to_save))
-//					break;
-//				
-//				// First delete the application (The current application master key may have changed after changing the user name for that card)
-//				if (!rfid.DeleteApplicationIfExists(CARD_APPLICATION_ID))
-//					break;
-//				
-//				// Create the new application with default settings (we must still have permission to change the application master key later)
-//				if (!rfid.CreateApplication(CARD_APPLICATION_ID, KS_FACTORY_DEFAULT, 5, i_AppMasterKey.GetKeyType()))
-//				//if (!rfid.CreateApplication(CARD_APPLICATION_ID, KS_FACTORY_DEFAULT, 5, DF_KEY_2K3DES))
-//					break;
-//				
-//				// After this command all the following commands will apply to the application (rather than the PICC)
-//				if (!rfid.SelectApplication(CARD_APPLICATION_ID))
-//					break;
-//				
-//				// Authentication with the application's master key is required
-//				if (!rfid.Authenticate(0, &DEFAULT_APP_KEY))
-//				//if (!rfid.Authenticate(0, &rfid.DES2_DEFAULT_KEY))
-//					break;   
-//				if(!rfid.GetKeySettings(&KeySettings,&key_count ,&KeyType))
-//					break;
-//				if(!rfid.ChangeKeySettings((DESFireKeySettings)0x0D))
-//					break;
-//				if(!rfid.GetKeySettings(&KeySettings,&key_count ,&KeyType))
-//					break;
-//				if(!rfid.ChangeKeySettings(KS_FACTORY_DEFAULT))
-//					break;
-//				if (!rfid.CreateStdDataFile(CARD_FILE_ID, &k_Permis, 16))
-//					break;
-//				if (!rfid.GetFileSettings(0 ,&FileSetting))
-//					break;
-//				// Write the StoreValue into that file
-//				if (!rfid.WriteFileData(CARD_FILE_ID, 0, 16, to_save))
-//					break; 
-//				
-//			}while(0);
-//			rfid.PowerDown();
-//			break;
+			//StoreDesfireSecret(&k_User);
+			do
+			{
+				byte to_save[17]={'m', 'a' ,'h', 'd' ,'i', '-' ,'a', 'm' ,'i', 'i' ,'r', 'i' ,'n', 'a' ,'s', 'a' ,'b'};
+				byte u8_AppMasterKey[24]="0123456789ABCDEF";
+				if (!GenerateDesfireSecrets(&k_User, &i_AppMasterKey, to_save))
+					break;
+				
+				// First delete the application (The current application master key may have changed after changing the user name for that card)
+				if (!rfid.DeleteApplicationIfExists(CARD_APPLICATION_ID))
+					break;
+				
+				// Create the new application with default settings (we must still have permission to change the application master key later)
+				//if (!rfid.CreateApplication(CARD_APPLICATION_ID, KS_FACTORY_DEFAULT, 5, i_AppMasterKey.GetKeyType()))
+				if (!rfid.CreateApplication(CARD_APPLICATION_ID, KS_FACTORY_DEFAULT, 5, DF_KEY_3K3DES))
+					break;
+				
+				// After this command all the following commands will apply to the application (rather than the PICC)
+				if (!rfid.SelectApplication(CARD_APPLICATION_ID))
+					break;
+				
+				// Authentication with the application's master key is required
+				//if (!rfid.Authenticate(0, &DEFAULT_APP_KEY))
+				if (!rfid.Authenticate(0, &rfid.DES3_DEFAULT_KEY))
+					break;   
+				if(!rfid.GetKeySettings(&KeySettings,&key_count ,&KeyType))
+					break;
+				if (!rfid.CreateStdDataFile(CARD_FILE_ID, &k_Permis, 16))
+					break;
+				if (!rfid.GetFileSettings(0 ,&FileSetting))
+					break;
+				// Write the StoreValue into that file
+				if (!rfid.WriteFileData(CARD_FILE_ID, 0, 16, to_save))
+					break; 
+				
+			}while(0);
+			rfid.PowerDown();
+			break;
 			//rfid.ChangeKeySettings(
 //					if(rfid.FormatCard())
 //					{

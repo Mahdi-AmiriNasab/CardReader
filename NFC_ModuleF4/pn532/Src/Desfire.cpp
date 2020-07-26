@@ -1357,6 +1357,11 @@ bool Desfire::Selftest()
         SER.print("The selftest requires a Desfire card.\r\n");
         return false;
     }
+	
+	// Get the Desfire card version
+    DESFireCardVersion k_Version;
+    if (!GetCardVersion(&k_Version))
+        return false;
 
     // Switch to PICC level
     if (!SelectApplication(0x000000))
@@ -1375,12 +1380,7 @@ bool Desfire::Selftest()
     // Authenticate with the factory default PICC master key (always DES)
     if (!Authenticate(0, &DES2_DEFAULT_KEY))
         return false;
-
-//    // Get the Desfire card version
-//    DESFireCardVersion k_Version;
-//    if (!GetCardVersion(&k_Version))
-//        return false;
-
+	
     // Delete all applications and all their files
     if (!FormatCard())
         return false;
