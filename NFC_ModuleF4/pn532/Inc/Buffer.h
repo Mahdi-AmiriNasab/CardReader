@@ -14,8 +14,6 @@
 #define BUFFER_H
 
 #include "Utils.h"
-#include "defines.h"
-extern DBG SER;
 
 // These macros create a new buffer on the stack avoiding the use of the 'new' operator.
 // ATTENTION: 
@@ -44,8 +42,6 @@ class RxBuffer
 public:
     inline RxBuffer(byte* u8_Buffer, int s32_Size) 
     { 
-//		if(s32_Size < 100)
-//			s32_Size = 100;
         mu8_Buf   = u8_Buffer;
         ms32_Size = s32_Size;
         ms32_Pos  = 0;        
@@ -58,6 +54,7 @@ public:
         ms32_Pos = 0;
         if (!CheckPos(s32_NewSize))
             return false;
+      
         ms32_Size = s32_NewSize;
         return true;
     }
@@ -135,7 +132,7 @@ private:
         if (ms32_Pos + s32_Count <= ms32_Size)
             return true;
         
-        SER.print("### RxBuffer Overflow ###\r\n");
+        Utils::Print("### RxBuffer Overflow ###\r\n");
         return false;
     }
    
@@ -152,8 +149,6 @@ class TxBuffer
 public:
     inline TxBuffer(byte* u8_Buffer, int s32_Size) 
     { 
-//		if(s32_Size < 100)
-//			s32_Size = 100;
         mu8_Buf   = u8_Buffer;
         ms32_Size = s32_Size;
         ms32_Pos  = 0;        
@@ -264,7 +259,7 @@ private:
         if (ms32_Pos + s32_Count <= ms32_Size)
             return true;
         
-        SER.print("### TxBuffer Overflow ###\r\n");
+        Utils::Print("### TxBuffer Overflow ###\r\n");
         return false;
     }
 

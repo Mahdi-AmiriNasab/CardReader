@@ -57,7 +57,7 @@
 
 // The ID of the application to be created
 // This value must be between 0x000001 and 0xFFFFFF (NOT zero!)
-const uint32_t CARD_APPLICATION_ID = 0xAA401F;
+const uint32_t CARD_APPLICATION_ID = 0xAAAAAA;
 
 // The ID of the file to be created in the above application
 // This value must be between 0 and 31

@@ -35,7 +35,7 @@ bool Classic::DumpCardMemory(char s8_KeyType, const byte* u8_Keys, bool b_ShowAc
 
     if (u8_UidLen == 0)
     {
-        SER.print("No card present.\r\n");
+        Utils::Print("No card present.\r\n");
         return false;
     }
 
@@ -46,7 +46,7 @@ bool Classic::DumpCardMemory(char s8_KeyType, const byte* u8_Keys, bool b_ShowAc
         if  ((B % 4) == 0) // first block of sector
         {
             sprintf(s8_Buf, "*** Sector %02d:\r\n", B/4);
-            SER.print(s8_Buf);
+            Utils::Print(s8_Buf);
       
             // Authorizing the first block of a sector is enough (1 sector = 4 blocks)
             bool b_OK = AuthenticateDataBlock(B, s8_KeyType, u8_Keys, u8_Uid, u8_UidLen);
@@ -61,21 +61,21 @@ bool Classic::DumpCardMemory(char s8_KeyType, const byte* u8_Keys, bool b_ShowAc
         }
 
         sprintf((char*)u8_Data, "Block %02d: ", B);
-        SER.print((char*)u8_Data);
+        Utils::Print((char*)u8_Data);
         
         if (ReadDataBlock(B, u8_Data))
         {
-            SER.printHexBuf(u8_Data, 16);
+            Utils::PrintHexBuf(u8_Data, 16);
 
             uint32_t u32_Value;
             byte     u8_Address;
             if (GetValue(u8_Data, &u32_Value, &u8_Address))
             {
                 sprintf(s8_Buf, " Value[0x%02X]= %u", u8_Address, (unsigned int)u32_Value);
-                SER.print(s8_Buf);
+                Utils::Print(s8_Buf);
             }
 
-            SER.print(LF);
+            Utils::Print(LF);
 
             if (b_ShowAccessBits && (B & 3) == 3)
                 ShowAccessBits(B & 0xFC, u8_Data[7], u8_Data[8]);
@@ -117,20 +117,20 @@ void Classic::ShowAccessBits(byte u8_Block, byte u8_Byte7, byte u8_Byte8)
             case 5: sprintf(s8_Buf, "Access block %02d: read data: key B,   write data: never\r\n",   u8_Block); break;
             case 7: sprintf(s8_Buf, "Access block %02d: read data: never,   write data: never\r\n",   u8_Block); break;
         }
-        SER.print(s8_Buf);
+        Utils::Print(s8_Buf);
         u8_Block ++;
     }
 
     switch (u8_Access[3]) // Trailer
     {
-        case 0: SER.print("Access KEYA: read: never,   write: key A\r\nAccess BITS: read: key A,   write: never\r\nAccess KEYB: read: key A,   write: key A\r\n"); break;
-        case 1: SER.print("Access KEYA: read: never,   write: key A\r\nAccess BITS: read: key A,   write: key A\r\nAccess KEYB: read: key A,   write: key A\r\n"); break;
-        case 2: SER.print("Access KEYA: read: never,   write: never\r\nAccess BITS: read: key A,   write: never\r\nAccess KEYB: read: key A,   write: never\r\n"); break;
-        case 3: SER.print("Access KEYA: read: never,   write: key B\r\nAccess BITS: read: key A|B, write: key B\r\nAccess KEYB: read: never,   write: key B\r\n"); break;
-        case 4: SER.print("Access KEYA: read: never,   write: key B\r\nAccess BITS: read: key A|B, write: never\r\nAccess KEYB: read: never,   write: key B\r\n"); break;
-        case 5: SER.print("Access KEYA: read: never,   write: never\r\nAccess BITS: read: key A|B, write: key B\r\nAccess KEYB: read: never,   write: never\r\n"); break;
+        case 0: Utils::Print("Access KEYA: read: never,   write: key A\r\nAccess BITS: read: key A,   write: never\r\nAccess KEYB: read: key A,   write: key A\r\n"); break;
+        case 1: Utils::Print("Access KEYA: read: never,   write: key A\r\nAccess BITS: read: key A,   write: key A\r\nAccess KEYB: read: key A,   write: key A\r\n"); break;
+        case 2: Utils::Print("Access KEYA: read: never,   write: never\r\nAccess BITS: read: key A,   write: never\r\nAccess KEYB: read: key A,   write: never\r\n"); break;
+        case 3: Utils::Print("Access KEYA: read: never,   write: key B\r\nAccess BITS: read: key A|B, write: key B\r\nAccess KEYB: read: never,   write: key B\r\n"); break;
+        case 4: Utils::Print("Access KEYA: read: never,   write: key B\r\nAccess BITS: read: key A|B, write: never\r\nAccess KEYB: read: never,   write: key B\r\n"); break;
+        case 5: Utils::Print("Access KEYA: read: never,   write: never\r\nAccess BITS: read: key A|B, write: key B\r\nAccess KEYB: read: never,   write: never\r\n"); break;
         case 6: 
-        case 7: SER.print("Access KEYA: read: never,   write: never\r\nAccess BITS: read: key A|B, write: never\r\nAccess KEYB: read: never,   write: never\r\n"); break;
+        case 7: Utils::Print("Access KEYA: read: never,   write: never\r\nAccess BITS: read: key A|B, write: never\r\nAccess KEYB: read: never,   write: never\r\n"); break;
     }
 }
 
@@ -221,7 +221,7 @@ void Classic::SetValue(byte* u8_Data, uint32_t u32_Value, byte u8_Address)
 **************************************************************************/
 bool Classic::AuthenticateDataBlock(byte u8_Block, char s8_KeyType, const byte* u8_KeyData, const byte* u8_Uid, byte u8_UidLen) 
 {
-    if (mu8_DebugLevel > 0) SER.print("\r\n*** AuthenticateDataBlock()\r\n");
+    if (mu8_DebugLevel > 0) Utils::Print("\r\n*** AuthenticateDataBlock()\r\n");
     
     byte u8_Command;
     switch (s8_KeyType)
@@ -245,7 +245,7 @@ bool Classic::AuthenticateDataBlock(byte u8_Block, char s8_KeyType, const byte* 
 **************************************************************************/
 bool Classic::ReadDataBlock(byte u8_Block, byte* u8_Data)
 {
-    if (mu8_DebugLevel > 0) SER.print("\r\n*** ReadDataBlock()\r\n");
+    if (mu8_DebugLevel > 0) Utils::Print("\r\n*** ReadDataBlock()\r\n");
     
     return DataExchange(MIFARE_CMD_READ, u8_Block, u8_Data, 0);
 }
@@ -258,7 +258,7 @@ bool Classic::ReadDataBlock(byte u8_Block, byte* u8_Data)
 **************************************************************************/
 bool Classic::WriteDataBlock(byte u8_Block, byte* u8_Data)
 {
-    if (mu8_DebugLevel > 0) SER.print("\r\n*** WriteDataBlock()\r\n");
+    if (mu8_DebugLevel > 0) Utils::Print("\r\n*** WriteDataBlock()\r\n");
     
     return DataExchange(MIFARE_CMD_WRITE, u8_Block, u8_Data, 16);
 }
@@ -286,7 +286,7 @@ bool Classic::DataExchange(byte u8_Command, byte u8_Block, byte* u8_Data, byte u
     byte len = ReadData(mu8_PacketBuffer, 26);
     if (len < 3 || mu8_PacketBuffer[1] != PN532_COMMAND_INDATAEXCHANGE + 1)
     {
-        SER.print("DataExchange failed\r\n");
+        Utils::Print("DataExchange failed\r\n");
         return false;
     }
 
@@ -298,7 +298,7 @@ bool Classic::DataExchange(byte u8_Command, byte u8_Block, byte* u8_Data, byte u
     {
         if (len < 19)
         {
-            SER.print("DataExchange returned invalid data\r\n");
+            Utils::Print("DataExchange returned invalid data\r\n");
             return false;
         }
         memcpy(u8_Data, mu8_PacketBuffer + 3, 16);
