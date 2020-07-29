@@ -56,7 +56,7 @@ PN532::PN532()
     mu8_MosiPin    = 0;  
     mu8_SselPin    = 0;  
     mu8_ResetPin   = 0;
-	mu8_DebugLevel = 2;
+	mu8_DebugLevel = 0;
 }
 
 /**************************************************************************
