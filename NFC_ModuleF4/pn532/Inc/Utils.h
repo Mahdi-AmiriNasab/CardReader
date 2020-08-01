@@ -84,7 +84,7 @@ public:
     }
     // Get the next character from the Terminal program on the PC
     // returns -1 if no character available
-    static inline int Read()
+    static inline char Read()
     {
         return Serial.read();
     }

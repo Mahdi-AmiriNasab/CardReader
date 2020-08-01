@@ -30,8 +30,22 @@
 
 //define file size for each std file
 
-#define FileSize 	12
+#define FileSize 	13
+
 #define Delay_Blink  10
+
+#define USER1 to_save_mahdi
+#define USER2 to_save_mehran
+
+#if FileSize > 13
+	#error "FileSize value more than 13 causes hardware disaster";
+#endif
+
+
+#ifndef SELECT_USER
+	#define SELECT_USER USER1
+#endif
+
 
 #if USE_DESFIRE
 
@@ -636,6 +650,7 @@ int main(void)
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 	uint8_t uid_buffer[100], uid_length ;
+	bool flag_OK = 0;
 	//Read = 1, Write = 1 
 	typedef enum 
 	{
@@ -695,23 +710,47 @@ int main(void)
 	k_Permis.e_WriteAccess        = AR_KEY0;
 	k_Permis.e_ReadAndWriteAccess = AR_KEY0;
 	k_Permis.e_ChangeAccess       = AR_KEY0;
-	byte to_save[17]={'m', 'a' ,'h', 'd' ,'i', '-' ,'a', 'm' ,'i' ,'r', 'i' ,'n', 'a' ,'s', 'a' ,'b'};
-	Utils::Print("Hold the BLUE button to start write process. Otherwise release it to start read process...",LF);
-	HAL_Delay(1000);
+	byte to_save_mahdi[16]={'m', 'a' ,'h', 'd' ,'i', '-' ,'a', 'm' ,'i' ,'r', 'i' ,'n', 'a' ,'s', 'a' ,'b'};
+	byte to_save_mehran[16]={'m', 'e' ,'h', 'r' ,'a', 'n' ,'-' ,'r', 'a' ,'s' ,'t', 'g' ,'a', 'r', 0, 0};
+
+	do{
+		
+		Utils::Print("Type W to start write process",LF);
+		Utils::Print("Type R to start read process",LF);
+		while(!SerialClass::Available()); // wait for a character
+		char char_in = SerialClass::Read ();
+		if((char_in == 'W') || (char_in == 'w'))
+		{
+			RW_phase = WRITE;
+			flag_OK = 1;
+		}
+		else if((char_in == 'R') || (char_in == 'r'))
+		{
+			RW_phase = READ;
+			flag_OK = 1;
+		}
+		else
+		{
+			Utils::Print("",LF);
+			flag_OK = 0;
+		}
+	}while(!flag_OK);
 	
-	if (HAL_GPIO_ReadPin(Button_Blue_GPIO_Port, Button_Blue_Pin))
-		RW_phase = WRITE;
-	else
-		RW_phase = READ;
+//	HAL_Delay(1000);
+	
+//	if (HAL_GPIO_ReadPin(Button_Blue_GPIO_Port, Button_Blue_Pin))
+//		RW_phase = WRITE;
+//	else
+//		RW_phase = READ;
 	char buff[50];
 	sprintf(buff, "Selected process is : %s\r\n", (RW_phase & 1) ? "READ": "WRITE");
 	Utils::Print(buff);
 	
-	HAL_Delay(1000);
-	Utils::Print("Press the blue button to continue ");
-	
-	while(!HAL_GPIO_ReadPin(Button_Blue_GPIO_Port, Button_Blue_Pin));
-	HAL_Delay(1000);
+//	HAL_Delay(1000);
+//	Utils::Print("Press the blue button to continue ");
+//	
+//	while(!HAL_GPIO_ReadPin(Button_Blue_GPIO_Port, Button_Blue_Pin));
+//	HAL_Delay(1000);
 	while(RW_phase == WRITE)
 	{
 	/* USER CODE END WHILE */
@@ -720,57 +759,63 @@ int main(void)
 		if (ReadCard(k_User.ID.u8, &k_Card) && k_Card.u8_UidLength > 4)
 		{
 			LED_Blink(orange_port, orange_pin, Delay_Blink);
-			rfid.FormatCard();
+			//rfid.FormatCard();
 			uint8_t encrypted_data_pre[FileSize] = {0};
-			memcpy(encrypted_data_pre, to_save, FileSize);
+			memcpy(encrypted_data_pre, SELECT_USER, FileSize);
 			
 			Utils::Print("Copping original data\nData is(HEX):",LF);
 			Utils::Print((const char *)encrypted_data_pre, LF);
 			
-			Desfire My_Desfire;
-			if (!My_Desfire.DES2_DEFAULT_KEY.CryptDataBlock(encrypted_data_pre, to_save,  KEY_ENCIPHER) )
-				break;
-			
-			Utils::Print("Encrypted data is(HEX):");
-			Utils::PrintHexBuf(encrypted_data_pre, FileSize, LF);
+//			Desfire My_Desfire;
+//			if (!My_Desfire.DES2_DEFAULT_KEY.CryptDataBlock(encrypted_data_pre, SELECT_USER,  KEY_ENCIPHER) )
+//				break;
+//			
+//			Utils::Print("Encrypted data is(HEX):");
+//			Utils::PrintHexBuf(encrypted_data_pre, FileSize, LF);
 
-			if (AuthenticatePICC(&k_Card.u8_KeyVersion));
-		
-			do
-			{
+			if (AuthenticatePICC(&k_Card.u8_KeyVersion))
+				do
+				{
+					
+					// First delete the application (The current application master key may have changed after changing the user name for that card)
+					if (!rfid.DeleteApplicationIfExists(CARD_APPLICATION_ID))
+						break;
+					
+					// Create the new application with default settings (we must still have permission to change the application master key later)
+					//if (!rfid.CreateApplication(CARD_APPLICATION_ID, KS_FACTORY_DEFAULT, 5, i_AppMasterKey.GetKeyType()))
+					if (!rfid.CreateApplication(CARD_APPLICATION_ID, KS_FACTORY_DEFAULT, 1, DF_KEY_2K3DES))
+						break;
+					
+					// After this command all the following commands will apply to the application (rather than the PICC)
+					if (!rfid.SelectApplication(CARD_APPLICATION_ID))
+						break;
+					
+					// Authentication with the application's master key is required
+					//if (!rfid.Authenticate(0, &DEFAULT_APP_KEY))
+					
+					if (!rfid.Authenticate(0, &rfid.DES2_DEFAULT_KEY))
+						break;   
+					
+					if(!rfid.GetKeySettings(&KeySettings,&key_count ,&KeyType))
+						break;
+					
+					if (!rfid.CreateStdDataFile(CARD_FILE_ID, &k_Permis, FileSize))
+						break;
+					if (!rfid.GetFileSettings(0 ,&FileSetting))
+						break;
+					// Write the StoreValue into that file
+					if (!rfid.WriteFileData(CARD_FILE_ID, 0, FileSize, SELECT_USER))
+						break; 
+					LED_Blink(green_port, green_pin, Delay_Blink);
+					Utils::Print("Write SUCCESSFULLY",LF);
+					
+				}while(0);
 				
-				// First delete the application (The current application master key may have changed after changing the user name for that card)
-				if (!rfid.DeleteApplicationIfExists(CARD_APPLICATION_ID))
-					break;
-				
-				// Create the new application with default settings (we must still have permission to change the application master key later)
-				//if (!rfid.CreateApplication(CARD_APPLICATION_ID, KS_FACTORY_DEFAULT, 5, i_AppMasterKey.GetKeyType()))
-				if (!rfid.CreateApplication(CARD_APPLICATION_ID, KS_FACTORY_DEFAULT, 1, DF_KEY_2K3DES))
-					break;
-				
-				// After this command all the following commands will apply to the application (rather than the PICC)
-				if (!rfid.SelectApplication(CARD_APPLICATION_ID))
-					break;
-				
-				// Authentication with the application's master key is required
-				//if (!rfid.Authenticate(0, &DEFAULT_APP_KEY))
-				
-				if (!rfid.Authenticate(0, &rfid.DES2_DEFAULT_KEY))
-					break;   
-				
-				if(!rfid.GetKeySettings(&KeySettings,&key_count ,&KeyType))
-					break;
-				
-				if (!rfid.CreateStdDataFile(CARD_FILE_ID, &k_Permis, FileSize))
-					break;
-				if (!rfid.GetFileSettings(0 ,&FileSetting))
-					break;
-				// Write the StoreValue into that file
-				if (!rfid.WriteFileData(CARD_FILE_ID, 0, FileSize, to_save))
-					break; 
-				LED_Blink(green_port, green_pin, Delay_Blink);
-				
-			}while(0);
+				else
+				{
+					Utils::Print("Write FAILED",LF);
+					LED_Blink(red_port, red_pin, Delay_Blink);
+				}
 			
 			break;
 		}
@@ -815,56 +860,68 @@ int main(void)
 		
 		if (ReadCard(k_User.ID.u8, &k_Card) && k_Card.u8_UidLength > 4)
 		{
-			if (AuthenticatePICC(&k_Card.u8_KeyVersion))
-			{
-				//if (!rfid.CreateApplication(CARD_APPLICATION_ID, KS_FACTORY_DEFAULT, 5, i_AppMasterKey.GetKeyType()))
-				if (!rfid.SelectApplication(CARD_APPLICATION_ID))
-					break;
-				// Authentication with the application's master key is required
-				//if (!rfid.Authenticate(0, &DEFAULT_APP_KEY))
-				if (!rfid.Authenticate(0, &rfid.DES2_DEFAULT_KEY))
-					break;   
-				 if (!rfid.GetFileIDs(file_id, &file_count))
-					break;
-				if (file_count != 1 || file_id[0] != 0)
-					Utils::Print("GetFileIDs() failed\r\n");
+			if(AuthenticatePICC(&k_Card.u8_KeyVersion))
+				do 
+				{
+					//if (!rfid.CreateApplication(CARD_APPLICATION_ID, KS_FACTORY_DEFAULT, 5, i_AppMasterKey.GetKeyType()))
+					if (!rfid.SelectApplication(CARD_APPLICATION_ID))
+						break;
+					// Authentication with the application's master key is required
+					//if (!rfid.Authenticate(0, &DEFAULT_APP_KEY))
+					if (!rfid.Authenticate(0, &rfid.DES2_DEFAULT_KEY))
+						break;   
+					 if (!rfid.GetFileIDs(file_id, &file_count))
+						break;
+					if (file_count != 1 || file_id[0] != 0)
+						Utils::Print("GetFileIDs() failed\r\n");
+						
 					
-				
-				uint8_t read_card_buffer[16];
-				if(!rfid.ReadFileData(0 ,0 ,FileSize ,read_card_buffer))
-					break;
-				
-				Utils::Print("Recieved data in string:", LF);
-				Utils::Print((const char *)read_card_buffer, LF);
-				Utils::Print("Recieved data in HEX:", LF);
-				Utils::PrintHexBuf(read_card_buffer,FileSize ,LF);
-				
-				byte encrypted_data[FileSize];
-				memcpy(encrypted_data, to_save, FileSize);
-				if (!GenerateDesfireSecrets(&k_User, &rfid.DES2_DEFAULT_KEY, encrypted_data))
-					break;
-				if(memcmp(encrypted_data, to_save, FileSize) == 0)
-					Utils::Print("Data is the same", LF);
-				else
-					Utils::Print("<<Data is NOT the same>>", LF);
-			
+					uint8_t read_card_buffer[16];
+					if(!rfid.ReadFileData(0 ,0 ,FileSize ,read_card_buffer))
+						break;
+					
+					Utils::Print("Recieved data in string:", LF);
+					Utils::Print((const char *)read_card_buffer, LF);
+					Utils::Print("Recieved data in HEX:", LF);
+					Utils::PrintHexBuf(read_card_buffer,FileSize ,LF);
+					sprintf(buff,"File size is: %d", FileSize);
+					Utils::Print(buff,LF);
+					
+//					byte encrypted_data[FileSize];
+//					memcpy(encrypted_data, SELECT_USER, FileSize);
+//					if (!GenerateDesfireSecrets(&k_User, &rfid.DES2_DEFAULT_KEY, encrypted_data))
+//						break;
+//					if(memcmp(encrypted_data, SELECT_USER, FileSize) == 0)
+//						Utils::Print("Data is the same", LF);
+//					else
+//						Utils::Print("<<Data is NOT the same>>", LF);
+//				
 
-				// ##################################################
-				// Testing encryption and decryption
-				// ##################################################
-				Desfire i_Desfire;
-				byte u8_Decrypt[FileSize] = {0};
+//					// ##################################################
+//					// Testing encryption and decryption
+//					// ##################################################
+//					Desfire i_Desfire;
+//					byte u8_Decrypt[FileSize] = {0};
 
-				if (!i_Desfire.DES2_DEFAULT_KEY.CryptDataBlock(u8_Decrypt, read_card_buffer, KEY_DECIPHER))
-					break;
+//					if (!i_Desfire.DES2_DEFAULT_KEY.CryptDataBlock(u8_Decrypt, read_card_buffer, KEY_DECIPHER))
+//						break;
+//					
+//					Utils::Print("Decrypted data is:");
+//					Utils::Print((const char *)u8_Decrypt, LF);
+//					Utils::Print("Decrypted ata in HEX:", LF);
+//					Utils::PrintHexBuf(u8_Decrypt,FileSize ,LF);
 				
-				Utils::Print("Decrypted data is:");
-				Utils::Print((const char *)u8_Decrypt, LF);
-				Utils::Print("Decrypted ata in HEX:", LF);
-				Utils::PrintHexBuf(u8_Decrypt,FileSize ,LF);
-				
+					Utils::Print("Read SUCCESSFULLY",LF);	
+					LED_Blink(green_port, green_pin, Delay_Blink);
+					flag_OK = 1;
+						
+				}while(0);
+			if(!flag_OK)
+			{
+				Utils::Print("Read FAILED",LF);	
+				LED_Blink(red_port, red_pin, Delay_Blink);
+				flag_OK = 0;	
 			}
-			LED_Blink(green_port, green_pin, Delay_Blink);
 		}
 		break;
 		

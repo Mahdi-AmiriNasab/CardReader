@@ -142,8 +142,8 @@ class DBG
 
 	inline byte read(void)
 	{
-		uint8_t read_tmp = 0;
-		HAL_UART_Receive(&handle_uart, &read_tmp ,1 , 100);
+		uint8_t read_tmp ;
+		HAL_UART_Receive(&handle_uart, &read_tmp ,2 , 100);
 		return read_tmp;
 	}
 	private:
