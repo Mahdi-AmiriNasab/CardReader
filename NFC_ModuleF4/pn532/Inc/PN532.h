@@ -5,24 +5,12 @@
 
 #include "Utils.h"
 #ifndef USE_HAL_DRIVER
-#include "Arduino.h"
-#include <Adafruit_SPIDevice.h>
-
-#define SER Serial2     // arduino serial port
+	#include "Arduino.h"
+	#include <Adafruit_SPIDevice.h>
+	#define SER Serial2     // arduino serial port
 #else
-#include "main.h"
-#include <defines.h>
-// typedef  uint8_t byte;
-
-// class DBG
-// {
-// 	public:
-// 		 void print (const char *str);
-// 		 void println (const char *str);
-// 		 void println (void);
-// 	private:
-// };
-
+	#include "main.h"
+	#include <defines.h>
 #endif
 #if !defined (USE_SOFTWARE_SPI)
     #define USE_SOFTWARE_SPI   false   // Visual Studio needs this in upper case
@@ -56,18 +44,9 @@
 
 #define CS_HIGH 		HAL_Delay(10);																										\
 										HAL_GPIO_WritePin(CP_SLC_GPIO_Port, CP_SLC_Pin, GPIO_PIN_SET); 		\
-							  		HAL_Delay(10)
+										HAL_Delay(10)
 
 
-
-
-
-
-/*
-#define printDec(s32_Data, s8_LF)               \   
-        char s8_Buf[20];                        \
-        sprintf(s8_Buf, "%d", s32_Data);        \
-        SER.print((const char *)s8_Buf, s8_LF) */
 // ----------------------------------------------------------------------
 
 // This parameter may be used to slow down the software SPI bus speed.
@@ -234,7 +213,7 @@ class PN532
     bool SamConfig();
     bool GetFirmwareVersion(byte* pIcType, byte* pVersionHi, byte* pVersionLo, byte* pFlags);
     bool WriteGPIO(bool P30, bool P31, bool P33, bool P35);
-    bool SetPassiveActivationRetries(uint8_t maxRetries);
+    bool SetPassiveActivationRetries(void);
     bool DeselectCard();
     bool ReleaseCard();
     bool SelectCard();
@@ -272,47 +251,3 @@ class PN532
 };
 
 #endif
-/*
-#if USE_HARDWARE_I2C
-    // This class implements Hardware I2C (2 wire bus with pull-up resistors). It is not used for the DoorOpener sketch.
-    // NOTE: This class is not used when you switched to SPI mode with PN532::InitSoftwareSPI() or PN532::InitHardwareSPI().
-class I2cClass 
-    {  
-    public:
-        // Initialize the I2C pins
-        inline void Begin(void) 
-        {
-            Wire.begin();
-        }
-        // --------------------- READ -------------------------
-        // Read the requested amount of bytes at once from the I2C bus into an internal buffer.
-        // ATTENTION: The Arduino library is extremely primitive. A timeout has not been implemented.
-        // When the CLK line is permanently low this function hangs forever!
-        inline byte RequestFrom(byte u8_Address, byte u8_Quantity)
-        {
-            return Wire.requestFrom(u8_Address, u8_Quantity);
-        }
-        // Read one byte from the buffer that has been read when calling RequestFrom()
-        inline int Read(void)
-        {
-            return Wire.read();
-        }
-        // --------------------- WRITE -------------------------
-        // Initiates a Send transmission
-        inline void BeginTransmission(byte u8_Address)
-        {
-            Wire.beginTransmission(u8_Address);
-        }
-        // Write one byte to the I2C bus
-        inline void Write(byte u8_Data)
-        {
-            Wire.write(u8_Data);
-        }
-        // Ends a Send transmission
-        inline void EndTransmission(void)
-        {
-            Wire.endTransmission();
-        }
-    };
-#endif
-*/

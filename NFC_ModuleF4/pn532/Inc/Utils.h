@@ -2,13 +2,6 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include "stdio.h"
-#include "string.h"
-
-#ifdef USE_HAL_DRIVER
-	#include "defines.h"
-#endif
-
 // *********************************************************************************
 // The following switches define how the Teensy communicates with the PN532 board.
 // For the DoorOpener sketch the only valid option is Software SPI.
@@ -16,20 +9,24 @@
 // ATTENTION: Only one of the following defines must be set to true!
 // NOTE: In Software SPI mode there is no external libraray required. Only 4 regular digital pins are used.
 // If you want to transfer the code to another processor the easiest way will be to use Software SPI mode.
-#define USE_SOFTWARE_SPI   false   // Visual Studio needs this in upper case
-#define USE_HARDWARE_SPI   false  // Visual Studio needs this in upper case
-#define USE_HARDWARE_I2C   true  // Visual Studio needs this in upper case
+#define USE_SOFTWARE_SPI   false
+#define USE_HARDWARE_SPI   false
+#define USE_HARDWARE_I2C   true
 // ********************************************************************************/
-
-
+#ifndef USE_HAL_DRIVER
+	#include <Arduino.h>
+#else
+	#include "defines.h"
+	extern DBG Serial;
+#endif
 #if USE_HARDWARE_SPI
     #include <SPI.h>  // Hardware SPI bus
 #elif USE_HARDWARE_I2C
-	#define USE_SOFTWARE_RD_PIN true
-		#if !(USE_SOFTWARE_RD_PIN)
-		#define USE_HARDWARE_RD_PIN true
-		#endif
-    #include <Wire_a.h> // Hardware I2C bus
+	#ifndef USE_HAL_DRIVER
+		#include <Wire.h> // Hardware I2C bus
+	#else
+		#include <Wire_a.h> // Hardware I2C bus compatible with HAL
+	#endif
 #elif USE_SOFTWARE_SPI
     // no #include required
 #else
@@ -39,18 +36,72 @@
 #define LF  "\r\n" // LineFeed 
 
 // Teensy definitions for digital pins:
-//#ifndef INPUT
-//    #define OUTPUT   0x1
-//    #define INPUT    0x0
-//    #define HIGH     0x1
-//    #define LOW      0x0
-//#endif
+#if defined INPUT && !USE_HAL_DRIVER
+    #define OUTPUT   0x1
+    #define INPUT    0x0
+    #define HIGH     0x1
+    #define LOW      0x0
+#endif
+
+// If you compile this project on Visual Studio...
+#if defined _MSC_VER && !USE_HAL_DRIVER
+	typedef unsigned __int64 uint64_t;
+	typedef __int64           int64_t;
+	typedef unsigned int     uint32_t;
+	typedef int               int32_t;
+	typedef unsigned short   uint16_t;
+	typedef short             int16_t;
+	typedef unsigned char     uint8_t;
+	typedef char               int8_t;
+    // disable "sprintf deprecated" warning
+    #pragma warning(disable: 4996) 
+#endif
+#ifdef USE_HAL_DRIVER
+	
+#endif
+// -------------------------------------------------------------------------------------------------------------------
+
+// USB connection to Terminal program (Teraterm) on PC via COM port
+// When you compile the code for Linux, Windows or any other platform you must modify this class.
+// You can leave all functions empty and only redirect Print() to printf().
+class SerialClass
+{  
+public:
+    // Create a COM connection via USB.
+    // Teensy ignores the baudrate parameter (only for older Arduino boards)
+    static inline void Begin(uint32_t u32_Baud) 
+    {
+		#ifndef USE_HAL_DRIVER
+			Serial.begin(u32_Baud);
+		#else
+			#warning "Use HAL driver to set baudrate"
+		#endif
+    }
+    // returns how many characters the user has typed in the Terminal program on the PC which have not yet been read with Read()
+    static inline int Available()
+    {
+        return Serial.available();
+    }
+    // Get the next character from the Terminal program on the PC
+    // returns -1 if no character available
+    static inline int Read()
+    {
+        return Serial.read();
+    }
+    // Print text to the Terminal program on the PC
+    // On Windows/Linux use printf() here to write debug output an errors to the Console.
+    static inline void Print(const char* s8_Text)
+    {
+        Serial.print(s8_Text);
+    }
+};
 
 
 // -------------------------------------------------------------------------------------------------------------------
 
 #if USE_HARDWARE_SPI
     // This class implements Hardware SPI (4 wire bus). It is not used for the DoorOpener sketch.
+    // When you compile the code for Linux, Windows or any other platform you must modify this class.
     // NOTE: This class is not used when you switched to I2C mode with PN532::InitI2C() or Software SPI mode with PN532::InitSoftwareSPI().
     class SpiClass
     {  
@@ -69,36 +120,6 @@
 #endif
 
 // -------------------------------------------------------------------------------------------------------------------
-
-class SerialClass :public DBG
-{  
-	private:
-	DBG SER;
-	public:   
-		inline void Begin(uint32_t u32_Baud) 
-		{
-			handle_uart.Init.BaudRate = u32_Baud;
-			HAL_UART_Init(&handle_uart);
-		}
-		// returns how many characters the user has typed in the Terminal program on the PC which have not yet been read with Read()
-		inline int Available()
-		{
-			return SER.available();
-		}
-		// Get the next character from the Terminal program on the PC
-		// returns -1 if no character available
-		inline int Read()
-		{
-			return SER.read();
-		}
-		// Print text to the Terminal program on the PC
-		// On Windows/Linux use printf() here to write debug output an errors to the Console.
-		inline void Print(const char* s8_Text)
-		{
-			SER.print(s8_Text);
-		}
-
-};
 
 #if USE_HARDWARE_I2C
     // This class implements Hardware I2C (2 wire bus with pull-up resistors). It is not used for the DoorOpener sketch.
@@ -168,25 +189,33 @@ public:
         delayMicroseconds(s32_MicroSeconds);
     }
     
-    // Defines if a digital processor pin is used as input or output
+	// Defines if a digital processor pin is used as input or output
     // u8_Mode = INPUT or OUTPUT
-    // If you compile on Visual Studio see WinDefines.h   
-    static inline void SetPinMode(unsigned char u8_Pin, unsigned char u8_Mode)
+    // When you compile the code for Linux, Windows or any other platform you must change this function.	
+    static inline void SetPinMode(byte u8_Pin, byte u8_Mode)
     {
-        //pinMode(u8_Pin, u8_Mode);
+        
+		
+		#ifndef USE_HAL_DRIVER
+			pinMode(u8_Pin, u8_Mode);
+		#else 
+			#warning ("Use HAL to configure the GPIO");
+		#endif
     }
     
-    // Sets a digital processor pin high or low.
+	// Sets a digital processor pin high or low.
     // u8_Status = HIGH or LOW
-    // If you compile on Visual Studio see WinDefines.h
+	// When you compile the code for Linux, Windows or any other platform you must change this function.
     static inline void WritePin(byte u8_Pin, byte u8_Status)
     {
-		
-        digitalWrite(u8_Pin, u8_Status ? HIGH : LOW);
+		#ifndef USE_HAL_DRIVER
+			digitalWrite(u8_Pin, u8_Status);
+		#else 
+			digitalWrite(u8_Pin, (PS)u8_Status); // Just to identify enumration pass
+		#endif	
     }
 
-
-    // reads the current state of a digital processor pin.
+	// reads the current state of a digital processor pin.
     // returns HIGH or LOW
     // If you compile on Visual Studio see WinDefines.h   
     static inline byte ReadPin(byte u8_Pin)

@@ -33,15 +33,10 @@
 
 #include "Desfire.h"
 #include "Secrets.h"
-//PN532::PN532(uint8_t irq, uint8_t reset) :
-// mu8_ResetPin(reset) , mu8_Irq (irq)
-Desfire::Desfire(uint8_t irq, uint8_t reset)
-    : mi_CmacBuffer(mu8_CmacBuffer_Data, sizeof(mu8_CmacBuffer_Data)) , temp1(reset) , temp2(irq)
+
+Desfire::Desfire() 
+    : mi_CmacBuffer(mu8_CmacBuffer_Data, sizeof(mu8_CmacBuffer_Data))
 {
-	//pin initialization
-	mu8_ResetPin = temp1;
-	mu8_Irq = temp2;
-	
     mpi_SessionKey       = NULL;
     mu8_LastAuthKeyNo    = NOT_AUTHENTICATED;
     mu8_LastPN532Error   = 0;    
@@ -81,19 +76,19 @@ bool Desfire::Authenticate(byte u8_KeyNo, DESFireKey* pi_Key)
     {
         char s8_Buf[80];
         sprintf(s8_Buf, "\r\n*** Authenticate(KeyNo= %d, Key= ", u8_KeyNo);
-        SER.print(s8_Buf);
+        Utils::Print(s8_Buf);
         pi_Key->PrintKey();
-        SER.print(")\r\n");
+        Utils::Print(")\r\n");
     }
 
     byte u8_Command;
     switch (pi_Key->GetKeyType())
     { 
-        case DF_KEY_AES:    u8_Command = DFEV1_INS_AUTHENTICATE_AES; SER.println("DF_KEY_AES selected"); break;
-        case DF_KEY_2K3DES: SER.println("DF_KEY_2K3DES selected");
-        case DF_KEY_3K3DES: u8_Command = DFEV1_INS_AUTHENTICATE_ISO; SER.println("DF_KEY_3K3DES selected"); break;
+        case DF_KEY_AES:    u8_Command = DFEV1_INS_AUTHENTICATE_AES; break;
+        case DF_KEY_2K3DES:
+        case DF_KEY_3K3DES: u8_Command = DFEV1_INS_AUTHENTICATE_ISO; break;
         default:
-            SER.print("Invalid key\r\n");
+            Utils::Print("Invalid key\r\n");
             return false;
     }
 
@@ -106,7 +101,7 @@ bool Desfire::Authenticate(byte u8_KeyNo, DESFireKey* pi_Key)
     int s32_Read = DataExchange(u8_Command, &i_Params, u8_RndB_enc, 16, &e_Status, MAC_None);
     if (e_Status != ST_MoreFrames || (s32_Read != 8 && s32_Read != 16))
     {
-        SER.print("Authentication failed (1)\r\n");
+        Utils::Print("Authentication failed (1)\r\n");
         return false;
     }
 
@@ -134,25 +129,25 @@ bool Desfire::Authenticate(byte u8_KeyNo, DESFireKey* pi_Key)
 
     if (mu8_DebugLevel > 0)
     {
-        SER.print("* RndB_enc:  ");
-        SER.printHexBuf(u8_RndB_enc,  s32_RandomSize, LF);
-        SER.print("* RndB:      ");
-        SER.printHexBuf(u8_RndB,      s32_RandomSize, LF);
-        SER.print("* RndB_rot:  ");
-        SER.printHexBuf(u8_RndB_rot,  s32_RandomSize, LF);
-        SER.print("* RndA:      ");
-        SER.printHexBuf(u8_RndA,      s32_RandomSize, LF);
-        SER.print("* RndAB:     ");
-        SER.printHexBuf(i_RndAB,      2*s32_RandomSize, LF);
-        SER.print("* RndAB_enc: ");
-        SER.printHexBuf(i_RndAB_enc,  2*s32_RandomSize, LF);
+        Utils::Print("* RndB_enc:  ");
+        Utils::PrintHexBuf(u8_RndB_enc,  s32_RandomSize, LF);
+        Utils::Print("* RndB:      ");
+        Utils::PrintHexBuf(u8_RndB,      s32_RandomSize, LF);
+        Utils::Print("* RndB_rot:  ");
+        Utils::PrintHexBuf(u8_RndB_rot,  s32_RandomSize, LF);
+        Utils::Print("* RndA:      ");
+        Utils::PrintHexBuf(u8_RndA,      s32_RandomSize, LF);
+        Utils::Print("* RndAB:     ");
+        Utils::PrintHexBuf(i_RndAB,      2*s32_RandomSize, LF);
+        Utils::Print("* RndAB_enc: ");
+        Utils::PrintHexBuf(i_RndAB_enc,  2*s32_RandomSize, LF);
     }
-	
-    byte u8_RndA_enc[16]; // encrypted random A 
+
+    byte u8_RndA_enc[16]; // encrypted random A
     s32_Read = DataExchange(DF_INS_ADDITIONAL_FRAME, &i_RndAB_enc, u8_RndA_enc, s32_RandomSize, &e_Status, MAC_None);
     if (e_Status != ST_Success || s32_Read != s32_RandomSize)
     {
-        SER.print("Authentication failed (2)\r\n");
+        Utils::Print("Authentication failed (2)\r\n");
         return false;
     }
 
@@ -165,18 +160,18 @@ bool Desfire::Authenticate(byte u8_KeyNo, DESFireKey* pi_Key)
 
     if (mu8_DebugLevel > 0)
     {
-        SER.print("* RndA_enc:  ");
-        SER.printHexBuf(u8_RndA_enc, s32_RandomSize, LF);
-        SER.print("* RndA_dec:  ");
-        SER.printHexBuf(u8_RndA_dec, s32_RandomSize, LF);
-        SER.print("* RndA_rot:  ");
-        SER.printHexBuf(u8_RndA_rot, s32_RandomSize, LF);
+        Utils::Print("* RndA_enc:  ");
+        Utils::PrintHexBuf(u8_RndA_enc, s32_RandomSize, LF);
+        Utils::Print("* RndA_dec:  ");
+        Utils::PrintHexBuf(u8_RndA_dec, s32_RandomSize, LF);
+        Utils::Print("* RndA_rot:  ");
+        Utils::PrintHexBuf(u8_RndA_rot, s32_RandomSize, LF);
     }
 
     // Last step: Check if the received random A is equal to the sent random A.
     if (memcmp(u8_RndA_dec, u8_RndA_rot, s32_RandomSize) != 0)
     {
-        SER.print("Authentication failed (3)\r\n");
+        Utils::Print("Authentication failed (3)\r\n");
         return false;
     }
 
@@ -220,7 +215,7 @@ bool Desfire::Authenticate(byte u8_KeyNo, DESFireKey* pi_Key)
 
     if (mu8_DebugLevel > 0)
     {
-        SER.print("* SessKey:   ");
+        Utils::Print("* SessKey:   ");
         mpi_SessionKey->PrintKey(LF);
     }
 
@@ -249,20 +244,20 @@ bool Desfire::ChangeKey(byte u8_KeyNo, DESFireKey* pi_NewKey, DESFireKey* pi_Cur
     {
         char s8_Buf[80];
         sprintf(s8_Buf, "\r\n*** ChangeKey(KeyNo= %d)\r\n", u8_KeyNo);
-        SER.print(s8_Buf);
+        Utils::Print(s8_Buf);
     }
 
     if (mu8_LastAuthKeyNo == NOT_AUTHENTICATED)
     {
-        SER.print("Not authenticated\r\n");
+        Utils::Print("Not authenticated\r\n");
         return false;
     }
 
     if (mu8_DebugLevel > 0)
     {
-        SER.print("* SessKey IV:  ");
+        Utils::Print("* SessKey IV:  ");
         mpi_SessionKey->PrintIV(LF);
-        SER.print("* New Key:     ");
+        Utils::Print("* New Key:     ");
         pi_NewKey->PrintKey(LF);
     }    
 
@@ -288,7 +283,7 @@ bool Desfire::ChangeKey(byte u8_KeyNo, DESFireKey* pi_NewKey, DESFireKey* pi_Cur
 
         if (mu8_DebugLevel > 0)
         {
-            SER.print("* Cur Key:     ");
+            Utils::Print("* Cur Key:     ");
             pi_CurKey->PrintKey(LF);
         }        
 
@@ -308,8 +303,8 @@ bool Desfire::ChangeKey(byte u8_KeyNo, DESFireKey* pi_NewKey, DESFireKey* pi_Cur
 
     if (mu8_DebugLevel > 0)
     {
-        SER.print("* CRC Crypto:  0x");
-        SER.printHex32(u32_Crc, LF);
+        Utils::Print("* CRC Crypto:  0x");
+        Utils::PrintHex32(u32_Crc, LF);
     }
 
     if (!b_SameKey)
@@ -319,8 +314,8 @@ bool Desfire::ChangeKey(byte u8_KeyNo, DESFireKey* pi_NewKey, DESFireKey* pi_Cur
 
         if (mu8_DebugLevel > 0)
         {
-            SER.print("* CRC New Key: 0x");
-            SER.printHex32(u32_CrcNew, LF);
+            Utils::Print("* CRC New Key: 0x");
+            Utils::PrintHex32(u32_CrcNew, LF);
         }
     }
 
@@ -338,10 +333,10 @@ bool Desfire::ChangeKey(byte u8_KeyNo, DESFireKey* pi_NewKey, DESFireKey* pi_Cur
 
     if (mu8_DebugLevel > 0)
     {
-        SER.print("* Cryptogram:  ");
-        SER.printHexBuf(i_Cryptogram, s32_CryptoLen, LF);
-        SER.print("* Cryptog_enc: ");
-        SER.printHexBuf(u8_Cryptogram_enc, s32_CryptoLen, LF);
+        Utils::Print("* Cryptogram:  ");
+        Utils::PrintHexBuf(i_Cryptogram, s32_CryptoLen, LF);
+        Utils::Print("* Cryptog_enc: ");
+        Utils::PrintHexBuf(u8_Cryptogram_enc, s32_CryptoLen, LF);
     }
 
     TX_BUFFER(i_Params, 41);
@@ -361,13 +356,12 @@ bool Desfire::ChangeKey(byte u8_KeyNo, DESFireKey* pi_NewKey, DESFireKey* pi_Cur
 **************************************************************************/
 bool Desfire::GetKeyVersion(byte u8_KeyNo, byte* pu8_Version)
 {
-    char s8_Buf[80];
-    if (mu8_DebugLevel > 0)
-    {
-        sprintf(s8_Buf, "\r\n*** GetKeyVersion(KeyNo= %d)\r\n", u8_KeyNo);
-        SER.print(s8_Buf);
+   char s8_Buf[80];	
+    if (mu8_DebugLevel > 0)	
+    {	
+        sprintf(s8_Buf, "\r\n*** GetKeyVersion(KeyNo= %d)\r\n", u8_KeyNo);	
+        Utils::Print(s8_Buf);	
     }
-
     TX_BUFFER(i_Params, 1);
     i_Params.AppendUint8(u8_KeyNo);
 
@@ -376,8 +370,8 @@ bool Desfire::GetKeyVersion(byte u8_KeyNo, byte* pu8_Version)
 
     if (mu8_DebugLevel > 0)
     {
-        SER.print("Version: 0x");
-        SER.printHex8(*pu8_Version, LF);
+        Utils::Print("Version: 0x");
+        Utils::PrintHex8(*pu8_Version, LF);
     }
     return true;
 }
@@ -388,7 +382,7 @@ bool Desfire::GetKeyVersion(byte u8_KeyNo, byte* pu8_Version)
 **************************************************************************/
 bool Desfire::GetCardVersion(DESFireCardVersion* pk_Version)
 {
-    if (mu8_DebugLevel > 0) SER.print("\r\n*** GetCardVersion()\r\n");
+    if (mu8_DebugLevel > 0) Utils::Print("\r\n*** GetCardVersion()\r\n");
 
     byte* pu8_Ptr = (byte*)pk_Version;
 
@@ -410,19 +404,19 @@ bool Desfire::GetCardVersion(DESFireCardVersion* pk_Version)
     if (mu8_DebugLevel > 0)
     {
         char s8_Buf[80];
-        SER.print("--- Desfire Card Details ---\r\n");
+        Utils::Print("--- Desfire Card Details ---\r\n");
         sprintf(s8_Buf, "Hardware Version: %d.%d\r\n", pk_Version->hardwareMajVersion, pk_Version->hardwareMinVersion);
-        SER.print(s8_Buf);
+        Utils::Print(s8_Buf);
         sprintf(s8_Buf, "Software Version: %d.%d\r\n", pk_Version->softwareMajVersion, pk_Version->softwareMinVersion);
-        SER.print(s8_Buf);
+        Utils::Print(s8_Buf);
         sprintf(s8_Buf, "EEPROM size:      %d byte\r\n", 1 << (pk_Version->hardwareStorageSize / 2));
-        SER.print(s8_Buf);
+        Utils::Print(s8_Buf);
         sprintf(s8_Buf, "Production:       week %X, year 20%02X\r\n", pk_Version->cwProd, pk_Version->yearProd);
-        SER.print(s8_Buf);
-        SER.print("UID no:           ");         
-        SER.printHexBuf(pk_Version->uid, 7, LF);
-        SER.print("Batch no:         ");         
-        SER.printHexBuf(pk_Version->batchNo, 5, LF);
+        Utils::Print(s8_Buf);
+        Utils::Print("UID no:           ");         
+        Utils::PrintHexBuf(pk_Version->uid, 7, LF);
+        Utils::Print("Batch no:         ");         
+        Utils::PrintHexBuf(pk_Version->batchNo, 5, LF);
     }
     return true;
 }
@@ -432,7 +426,7 @@ bool Desfire::GetCardVersion(DESFireCardVersion* pk_Version)
 **************************************************************************/
 bool Desfire::FormatCard()
 {
-    if (mu8_DebugLevel > 0) SER.print("\r\n*** FormatCard()\r\n");
+    if (mu8_DebugLevel > 0) Utils::Print("\r\n*** FormatCard()\r\n");
 
     return (0 == DataExchange(DF_INS_FORMAT_PICC, NULL, NULL, 0, NULL, MAC_TmacRmac));
 }
@@ -448,7 +442,7 @@ bool Desfire::FormatCard()
 **************************************************************************/
 bool Desfire::GetKeySettings(DESFireKeySettings* pe_Settg, byte* pu8_KeyCount, DESFireKeyType* pe_KeyType)
 {
-    if (mu8_DebugLevel > 0) SER.print("\r\n*** GetKeySettings()\r\n");
+    if (mu8_DebugLevel > 0) Utils::Print("\r\n*** GetKeySettings()\r\n");
   
     byte u8_RetData[2];
     if (2 != DataExchange(DF_INS_GET_KEY_SETTINGS, NULL, u8_RetData, 2, NULL, MAC_TmacRmac))
@@ -462,7 +456,7 @@ bool Desfire::GetKeySettings(DESFireKeySettings* pe_Settg, byte* pu8_KeyCount, D
     {
          char s8_Buf[80];
          sprintf(s8_Buf, "Settings: 0x%02X, KeyCount: %d, KeyType: %s\r\n", *pe_Settg, *pu8_KeyCount, DESFireKey::GetKeyTypeAsString(*pe_KeyType));
-         SER.print(s8_Buf);
+         Utils::Print(s8_Buf);
     }
     return true;
 }
@@ -477,7 +471,7 @@ bool Desfire::ChangeKeySettings(DESFireKeySettings e_NewSettg)
     {
         char s8_Buf[80];
         sprintf(s8_Buf, "\r\n*** ChangeKeySettings(0x%02X)\r\n", e_NewSettg);
-        SER.print(s8_Buf);
+        Utils::Print(s8_Buf);
     }
 
     TX_BUFFER(i_Params, 16);
@@ -502,7 +496,7 @@ bool Desfire::ChangeKeySettings(DESFireKeySettings e_NewSettg)
 **************************************************************************/
 bool Desfire::EnableRandomIDForever()
 {
-    if (mu8_DebugLevel > 0) SER.print("\r\n*** EnableRandomIDForever()\r\n");
+    if (mu8_DebugLevel > 0) Utils::Print("\r\n*** EnableRandomIDForever()\r\n");
 
     TX_BUFFER(i_Command, 2);
     i_Command.AppendUint8(DFEV1_INS_SET_CONFIGURATION);
@@ -524,11 +518,11 @@ bool Desfire::EnableRandomIDForever()
 **************************************************************************/
 bool Desfire::GetRealCardID(byte u8_UID[7])
 {
-    if (mu8_DebugLevel > 0) SER.print("\r\n*** GetRealCardID()\r\n");
+    if (mu8_DebugLevel > 0) Utils::Print("\r\n*** GetRealCardID()\r\n");
 
     if (mu8_LastAuthKeyNo == NOT_AUTHENTICATED)
     {
-        SER.print("Not authenticated\r\n");
+        Utils::Print("Not authenticated\r\n");
         return false;
     }
 
@@ -549,20 +543,20 @@ bool Desfire::GetRealCardID(byte u8_UID[7])
 
     if (mu8_DebugLevel > 1)
     {
-        SER.print("* CRC:       0x");
-        SER.printHex32(u32_Crc2, LF);
+        Utils::Print("* CRC:       0x");
+        Utils::PrintHex32(u32_Crc2, LF);
     }
 
     if (u32_Crc1 != u32_Crc2)
     {
-        SER.print("Invalid CRC\r\n");
+        Utils::Print("Invalid CRC\r\n");
         return false;
     }
 
     if (mu8_DebugLevel > 0)
     {
-        SER.print("Real UID: ");
-        SER.printHexBuf(u8_UID, 7, LF);
+        Utils::Print("Real UID: ");
+        Utils::PrintHexBuf(u8_UID, 7, LF);
     }
     return true;
 }
@@ -575,7 +569,7 @@ bool Desfire::GetRealCardID(byte u8_UID[7])
 **************************************************************************/
 bool Desfire::GetFreeMemory(uint32_t* pu32_Memory)
 {
-    if (mu8_DebugLevel > 0) SER.print("\r\n*** GetFreeMemory()\r\n");
+    if (mu8_DebugLevel > 0) Utils::Print("\r\n*** GetFreeMemory()\r\n");
 
     *pu32_Memory = 0;    
  
@@ -589,7 +583,7 @@ bool Desfire::GetFreeMemory(uint32_t* pu32_Memory)
     {
         char s8_Buf[80];
         sprintf(s8_Buf, "Free memory: %d bytes\r\n", (int)*pu32_Memory);
-        SER.print(s8_Buf);
+        Utils::Print(s8_Buf);
     }
     return true;
 }
@@ -602,7 +596,7 @@ bool Desfire::GetFreeMemory(uint32_t* pu32_Memory)
 **************************************************************************/
 bool Desfire::GetApplicationIDs(uint32_t u32_IDlist[28], byte* pu8_AppCount)
 {
-    if (mu8_DebugLevel > 0) SER.print("\r\n*** GetApplicationIDs()\r\n");
+    if (mu8_DebugLevel > 0) Utils::Print("\r\n*** GetApplicationIDs()\r\n");
 
     memset(u32_IDlist, 0, 28 * sizeof(uint32_t));
 
@@ -637,13 +631,13 @@ bool Desfire::GetApplicationIDs(uint32_t u32_IDlist[28], byte* pu8_AppCount)
     {
         if (*pu8_AppCount == 0)
         {
-            SER.print("No Application ID's.\r\n");
+            Utils::Print("No Application ID's.\r\n");
         }
         else for (byte i=0; i<*pu8_AppCount; i++)
         {
             char s8_Buf[80];
             sprintf(s8_Buf, "Application %2d: 0x%06X\r\n", i, (unsigned int)u32_IDlist[i]);
-            SER.print(s8_Buf);
+            Utils::Print(s8_Buf);
         }
     }
     return true;
@@ -663,12 +657,12 @@ bool Desfire::CreateApplication(uint32_t u32_AppID, DESFireKeySettings e_Settg, 
     {
         char s8_Buf[80];
         sprintf(s8_Buf, "\r\n*** CreateApplication(App= 0x%06X, KeyCount= %d, Type= %s)\r\n", (unsigned int)u32_AppID, u8_KeyCount, DESFireKey::GetKeyTypeAsString(e_KeyType));
-        SER.print(s8_Buf);
+        Utils::Print(s8_Buf);
     }
 
     if (e_KeyType == DF_KEY_INVALID)
     {
-        SER.print("Invalid key type\r\n");
+        Utils::Print("Invalid key type\r\n");
         return false;
     }
 
@@ -715,7 +709,7 @@ bool Desfire::DeleteApplication(uint32_t u32_AppID)
     {
         char s8_Buf[80];
         sprintf(s8_Buf, "\r\n*** DeleteApplication(0x%06X)\r\n", (unsigned int)u32_AppID);
-        SER.print(s8_Buf);
+        Utils::Print(s8_Buf);
     }
 
     TX_BUFFER(i_Params, 3);
@@ -734,7 +728,7 @@ bool Desfire::SelectApplication(uint32_t u32_AppID)
     {
         char s8_Buf[80];
         sprintf(s8_Buf, "\r\n*** SelectApplication(0x%06X)\r\n", (unsigned int)u32_AppID);
-        SER.print(s8_Buf);
+        Utils::Print(s8_Buf);
     }
 
     TX_BUFFER(i_Params, 3);
@@ -757,7 +751,7 @@ bool Desfire::SelectApplication(uint32_t u32_AppID)
 **************************************************************************/
 bool Desfire::GetFileIDs(byte* u8_FileIDs, byte* pu8_FileCount)
 {
-    if (mu8_DebugLevel > 0) SER.print("\r\n*** GetFileIDs()\r\n");
+    if (mu8_DebugLevel > 0) Utils::Print("\r\n*** GetFileIDs()\r\n");
 
     int s32_Read = DataExchange(DF_INS_GET_FILE_IDS, NULL, u8_FileIDs, 32, NULL, MAC_TmacRmac);
     if (s32_Read < 0)
@@ -769,12 +763,12 @@ bool Desfire::GetFileIDs(byte* u8_FileIDs, byte* pu8_FileCount)
     {
         if (*pu8_FileCount == 0)
         {
-            SER.print("No files.\r\n");
+            Utils::Print("No files.\r\n");
         }
         else 
         {
-            SER.print("File ID's: ");
-            SER.printHexBuf(u8_FileIDs, s32_Read, LF);
+            Utils::Print("File ID's: ");
+            Utils::PrintHexBuf(u8_FileIDs, s32_Read, LF);
         }
     }
     return true;
@@ -789,7 +783,7 @@ bool Desfire::GetFileSettings(byte u8_FileID, DESFireFileSettings* pk_Settings)
     {
         char s8_Buf[80];
         sprintf(s8_Buf, "\r\n*** GetFileSettings(ID= %d)\r\n", u8_FileID);
-        SER.print(s8_Buf);
+        Utils::Print(s8_Buf);
     }
 
     memset(pk_Settings, 0, sizeof(DESFireFileSettings));
@@ -815,7 +809,7 @@ bool Desfire::GetFileSettings(byte u8_FileID, DESFireFileSettings* pk_Settings)
                         pk_Settings->e_FileType, pk_Settings->e_Encrypt,
                         pk_Settings->k_Permis.e_ReadAccess,         pk_Settings->k_Permis.e_WriteAccess, 
                         pk_Settings->k_Permis.e_ReadAndWriteAccess, pk_Settings->k_Permis.e_ChangeAccess);
-        SER.print(s8_Buf);
+        Utils::Print(s8_Buf);
     }    
 
     switch (pk_Settings->e_FileType)
@@ -827,7 +821,7 @@ bool Desfire::GetFileSettings(byte u8_FileID, DESFireFileSettings* pk_Settings)
             if (mu8_DebugLevel > 0)
             {
                 sprintf(s8_Buf, "FileSize: %d\r\n", (int)pk_Settings->u32_FileSize);
-                SER.print(s8_Buf);
+                Utils::Print(s8_Buf);
             }
             return true;
 
@@ -841,7 +835,7 @@ bool Desfire::GetFileSettings(byte u8_FileID, DESFireFileSettings* pk_Settings)
             {
                 sprintf(s8_Buf, "LowerLimit: %d, UpperLimit: %d, CreditValue: %d, LimitEnabled: %d\r\n", 
                         (int)pk_Settings->u32_LowerLimit, (int)pk_Settings->u32_UpperLimit, (int)pk_Settings->u32_LimitedCreditValue, (int)pk_Settings->b_LimitedCreditEnabled);
-                SER.print(s8_Buf);
+                Utils::Print(s8_Buf);
             }
             return true;
             
@@ -855,7 +849,7 @@ bool Desfire::GetFileSettings(byte u8_FileID, DESFireFileSettings* pk_Settings)
             {
                 sprintf(s8_Buf, "RecordSize: %d, MaxRecords: %d, CurrentRecords: %d\r\n", 
                         (int)pk_Settings->u32_RecordSize, (int)pk_Settings->u32_MaxNumberRecords, (int)pk_Settings->u32_CurrentNumberRecords);
-                SER.print(s8_Buf);
+                Utils::Print(s8_Buf);
             }
             return true;
             
@@ -873,7 +867,7 @@ bool Desfire::CreateStdDataFile(byte u8_FileID, DESFireFilePermissions* pk_Permi
     {
         char s8_Buf[80];
         sprintf(s8_Buf, "\r\n*** CreateStdDataFile(ID= %d, Size= %d)\r\n", u8_FileID, s32_FileSize);
-        SER.print(s8_Buf);
+        Utils::Print(s8_Buf);
     }
 
     uint16_t u16_Permis = pk_Permis->Pack();
@@ -897,7 +891,7 @@ bool Desfire::DeleteFile(byte u8_FileID)
     {
         char s8_Buf[80];
         sprintf(s8_Buf, "\r\n*** DeleteFile(ID= %d)\r\n", u8_FileID);
-        SER.print(s8_Buf);
+        Utils::Print(s8_Buf);
     }
 
     TX_BUFFER(i_Params, 1);
@@ -918,7 +912,7 @@ bool Desfire::ReadFileData(byte u8_FileID, int s32_Offset, int s32_Length, byte*
     {
         char s8_Buf[80];
         sprintf(s8_Buf, "\r\n*** ReadFileData(ID= %d, Offset= %d, Length= %d)\r\n", u8_FileID, s32_Offset, s32_Length);
-        SER.print(s8_Buf);
+        Utils::Print(s8_Buf);
     }
 
     // With intention this command does not use DF_INS_ADDITIONAL_FRAME because the CMAC must be calculated over all frames received.
@@ -955,7 +949,7 @@ bool Desfire::WriteFileData(byte u8_FileID, int s32_Offset, int s32_Length, cons
     {
         char s8_Buf[80];
         sprintf(s8_Buf, "\r\n*** WriteFileData(ID= %d, Offset= %d, Length= %d)\r\n", u8_FileID, s32_Offset, s32_Length);
-        SER.print(s8_Buf);
+        Utils::Print(s8_Buf);
     }
 
     // With intention this command does not use DF_INS_ADDITIONAL_FRAME because the CMAC must be calculated over all frames sent.
@@ -982,21 +976,19 @@ bool Desfire::WriteFileData(byte u8_FileID, int s32_Offset, int s32_Length, cons
     return true;
 }
 
-/**************************************************************************
-    Reads the value of a Value File
-**************************************************************************/
-bool Desfire::ReadFileValue(byte u8_FileID, uint32_t* pu32_Value)
-{
-	TX_BUFFER(i_Params, 1);
-	i_Params.AppendUint8(u8_FileID);
-
-	RX_BUFFER(i_RetData, 4);
-	if (4 != DataExchange(DF_INS_GET_VALUE, &i_Params, i_RetData, 4, NULL, MAC_TmacRmac))
-		return false;
-
-	*pu32_Value = i_RetData.ReadUint32();
-	return true;
-}
+/**************************************************************************	
+    Reads the value of a Value File	
+**************************************************************************/	
+bool Desfire::ReadFileValue(byte u8_FileID, uint32_t* pu32_Value)	
+{	
+	TX_BUFFER(i_Params, 1);	
+	i_Params.AppendUint8(u8_FileID);	
+	RX_BUFFER(i_RetData, 4);	
+	if (4 != DataExchange(DF_INS_GET_VALUE, &i_Params, i_RetData, 4, NULL, MAC_TmacRmac))	
+		return false;	
+	*pu32_Value = i_RetData.ReadUint32();	
+	return true;	
+}	
 
 // ########################################################################
 // ####                      LOW LEVEL FUNCTIONS                      #####
@@ -1008,7 +1000,7 @@ bool Desfire::ReadFileValue(byte u8_FileID, uint32_t* pu32_Value)
 // The commands that are executed first (GetKeyVersion and SelectApplication) execute without problems.
 // But it when it comes to Authenticate() the card suddenly does not respond anymore -> Timeout from PN532.
 // Conclusion: It seems that a Desfire card increases its power consumption in the moment when encrypting data,
-// so when it is too far away from the antenna -> the connection dies -> no answer -> timeout.
+// so when it is too far away from the antenna -> the connection dies.
 byte Desfire::GetLastPN532Error()
 {
     return mu8_LastPN532Error;
@@ -1057,7 +1049,7 @@ int Desfire::DataExchange(TxBuffer* pi_Command,               // in (command + p
     // mu8_PacketBuffer is used for input and output
     if (2 + pi_Command->GetCount() + pi_Params->GetCount() > PN532_PACKBUFFSIZE || s32_Overhead + s32_RecvSize > PN532_PACKBUFFSIZE)    
     {
-        SER.print("DataExchange(): Invalid parameters\r\n");
+        Utils::Print("DataExchange(): Invalid parameters\r\n");
         return -1;
     }
 
@@ -1065,7 +1057,7 @@ int Desfire::DataExchange(TxBuffer* pi_Command,               // in (command + p
     {
         if (mu8_LastAuthKeyNo == NOT_AUTHENTICATED)
         {
-            SER.print("Not authenticated\r\n");
+            Utils::Print("Not authenticated\r\n");
             return -1;
         }
     }
@@ -1074,7 +1066,7 @@ int Desfire::DataExchange(TxBuffer* pi_Command,               // in (command + p
     {
         if (mu8_DebugLevel > 0)
         {
-            SER.print("* Sess Key IV: ");
+            Utils::Print("* Sess Key IV: ");
             mpi_SessionKey->PrintIV(LF);
         }    
     
@@ -1089,10 +1081,10 @@ int Desfire::DataExchange(TxBuffer* pi_Command,               // in (command + p
     
         if (mu8_DebugLevel > 0)
         {
-            SER.print("* CRC Params:  0x");
-            SER.printHex32(u32_Crc, LF);
-            SER.print("* Params:      ");
-            SER.printHexBuf(pi_Params->GetData(), s32_CryptCount, LF);
+            Utils::Print("* CRC Params:  0x");
+            Utils::PrintHex32(u32_Crc, LF);
+            Utils::Print("* Params:      ");
+            Utils::PrintHexBuf(pi_Params->GetData(), s32_CryptCount, LF);
         }
     
         if (!mpi_SessionKey->CryptDataCBC(CBC_SEND, KEY_ENCIPHER, pi_Params->GetData(), pi_Params->GetData(), s32_CryptCount))
@@ -1100,8 +1092,8 @@ int Desfire::DataExchange(TxBuffer* pi_Command,               // in (command + p
     
         if (mu8_DebugLevel > 0)
         {
-            SER.print("* Params_enc:  ");
-            SER.printHexBuf(pi_Params->GetData(), s32_CryptCount, LF);
+            Utils::Print("* Params_enc:  ");
+            Utils::PrintHexBuf(pi_Params->GetData(), s32_CryptCount, LF);
         }    
     }
 
@@ -1124,8 +1116,8 @@ int Desfire::DataExchange(TxBuffer* pi_Command,               // in (command + p
 
         if (mu8_DebugLevel > 1)
         {
-            SER.print("TX CMAC:  ");
-            SER.printHexBuf(u8_CalcMac, mpi_SessionKey->GetBlockSize(), LF);
+            Utils::Print("TX CMAC:  ");
+            Utils::PrintHexBuf(u8_CalcMac, mpi_SessionKey->GetBlockSize(), LF);
         }
     }
 
@@ -1148,7 +1140,7 @@ int Desfire::DataExchange(TxBuffer* pi_Command,               // in (command + p
     // ReadData() returns 4 byte if status error from the Desfire card
     if (s32_Len < 3 || mu8_PacketBuffer[1] != PN532_COMMAND_INDATAEXCHANGE + 1)
     {
-        SER.print("DataExchange() failed\r\n");
+        Utils::Print("DataExchange() failed\r\n");
         return -1;
     }
 
@@ -1216,14 +1208,14 @@ int Desfire::DataExchange(TxBuffer* pi_Command,               // in (command + p
 
             if (mu8_DebugLevel > 1)
             {
-                SER.print("RX CMAC:  ");
-                SER.printHexBuf(u8_CalcMac, mpi_SessionKey->GetBlockSize(), LF);
+                Utils::Print("RX CMAC:  ");
+                Utils::PrintHexBuf(u8_CalcMac, mpi_SessionKey->GetBlockSize(), LF);
             }
       
             // For AES the CMAC is 16 byte, but only 8 are transmitted
             if (memcmp(u8_RxMac, u8_CalcMac, 8) != 0)
             {
-                SER.print("CMAC Mismatch\r\n");
+                Utils::Print("CMAC Mismatch\r\n");
                 return -1;
             }
         }
@@ -1231,7 +1223,7 @@ int Desfire::DataExchange(TxBuffer* pi_Command,               // in (command + p
 
     if (s32_Len > s32_RecvSize)
     {
-        SER.print("DataExchange() Buffer overflow\r\n");
+        Utils::Print("DataExchange() Buffer overflow\r\n");
         return -1;
     } 
 
@@ -1246,8 +1238,8 @@ int Desfire::DataExchange(TxBuffer* pi_Command,               // in (command + p
 
             if (mu8_DebugLevel > 1)
             {
-                SER.print("Decrypt:  ");
-                SER.printHexBuf(u8_RecvBuf, s32_Len, LF);
+                Utils::Print("Decrypt:  ");
+                Utils::PrintHexBuf(u8_RecvBuf, s32_Len, LF);
             }        
         }    
     }
@@ -1267,69 +1259,69 @@ bool Desfire::CheckCardStatus(DESFireStatus e_Status)
         default: break; // This is just to avoid stupid gcc compiler warnings
     }
 
-    SER.print("Desfire Error: ");
+    Utils::Print("Desfire Error: ");
     switch (e_Status)
     {
         case ST_OutOfMemory:
-            SER.print("Not enough EEPROM memory.\r\n");
+            Utils::Print("Not enough EEPROM memory.\r\n");
             return false;
         case ST_IllegalCommand:
-            SER.print("Illegal command.\r\n");
+            Utils::Print("Illegal command.\r\n");
             return false;
         case ST_IntegrityError:
-            SER.print("Integrity error.\r\n");
+            Utils::Print("Integrity error.\r\n");
             return false;
         case ST_KeyDoesNotExist:
-            SER.print("Key does not exist.\r\n");
+            Utils::Print("Key does not exist.\r\n");
             return false;
         case ST_WrongCommandLen:
-            SER.print("Wrong command length.\r\n");
+            Utils::Print("Wrong command length.\r\n");
             return false;
         case ST_PermissionDenied:
-            SER.print("Permission denied.\r\n");
+            Utils::Print("Permission denied.\r\n");
             return false;
         case ST_IncorrectParam:
-            SER.print("Incorrect parameter.\r\n");
+            Utils::Print("Incorrect parameter.\r\n");
             return false;
         case ST_AppNotFound:
-            SER.print("Application not found.\r\n");
+            Utils::Print("Application not found.\r\n");
             return false;
         case ST_AppIntegrityError:
-            SER.print("Application integrity error.\r\n");
+            Utils::Print("Application integrity error.\r\n");
             return false;
         case ST_AuthentError:
-            SER.print("Authentication error.\r\n");
+            Utils::Print("Authentication error.\r\n");
             return false;
         case ST_LimitExceeded:
-            SER.print("Limit exceeded.\r\n");
+            Utils::Print("Limit exceeded.\r\n");
             return false;
         case ST_CardIntegrityError:
-            SER.print("Card integrity error.\r\n");
+            Utils::Print("Card integrity error.\r\n");
             return false;
         case ST_CommandAborted:
-            SER.print("Command aborted.\r\n");
+            Utils::Print("Command aborted.\r\n");
             return false;
         case ST_CardDisabled:
-            SER.print("Card disabled.\r\n");
+            Utils::Print("Card disabled.\r\n");
             return false;
         case ST_InvalidApp:
-            SER.print("Invalid application.\r\n");
+            Utils::Print("Invalid application.\r\n");
             return false;
         case ST_DuplicateAidFiles:
-            SER.print("Duplicate AIDs or files.\r\n");
+            Utils::Print("Duplicate AIDs or files.\r\n");
             return false;
         case ST_EepromError:
-            SER.print("EEPROM error.\r\n");
+            Utils::Print("EEPROM error.\r\n");
             return false;
         case ST_FileNotFound:
-            SER.print("File not found.\r\n");
+            Utils::Print("File not found.\r\n");
             return false;
         case ST_FileIntegrityError:
-            SER.print("File integrity error.\r\n");
+            Utils::Print("File integrity error.\r\n");
             return false;
         default:
-            SER.print("0x");
-            SER.printHex8((byte)e_Status, LF);
+            Utils::Print("0x");
+            Utils::PrintHex8((byte)e_Status, LF);
             return false;
     }
 }
@@ -1354,7 +1346,7 @@ bool Desfire::Selftest()
 
     if ((e_CardType & CARD_Desfire) == 0)
     {
-        SER.print("The selftest requires a Desfire card.\r\n");
+        Utils::Print("The selftest requires a Desfire card.\r\n");
         return false;
     }
 
@@ -1368,18 +1360,19 @@ bool Desfire::Selftest()
 
     if (u8_Version != 0)
     {
-        SER.print("The selftest requires an empty Desfire card (factory default DES key)\r\n");
+        Utils::Print("The selftest requires an empty Desfire card (factory default DES key)\r\n");
         return false;
     }
+	
+	// Get the Desfire card version
+    DESFireCardVersion k_Version;
+    if (!GetCardVersion(&k_Version))
+        return false;
+
 
     // Authenticate with the factory default PICC master key (always DES)
     if (!Authenticate(0, &DES2_DEFAULT_KEY))
         return false;
-
-//    // Get the Desfire card version
-//    DESFireCardVersion k_Version;
-//    if (!GetCardVersion(&k_Version))
-//        return false;
 
     // Delete all applications and all their files
     if (!FormatCard())
@@ -1420,7 +1413,7 @@ bool Desfire::Selftest()
 
     if (u8_AppCount != 4 || u32_IDlist[0] != u32_App2KDES || u32_IDlist[1] != u32_App3KDES || u32_IDlist[2] != u32_AppAES || u32_IDlist[3] != u32_AppDel)
     {
-        SER.print("GetApplicationIDs() failed\r\n");
+        Utils::Print("GetApplicationIDs() failed\r\n");
         return false;
     }
 
@@ -1434,7 +1427,7 @@ bool Desfire::Selftest()
 
     if (u8_AppCount != 3)
     {
-        SER.print("DeleteApplication() failed\r\n");
+        Utils::Print("DeleteApplication() failed\r\n");
         return false;
     }
 
@@ -1457,7 +1450,7 @@ bool Desfire::Selftest()
 
     if (e_Settg != KS_FACTORY_DEFAULT || u8_KeyCount != 2 || e_KeyType != DF_KEY_2K3DES)
     {
-        SER.print("GetKeySettings() failed\r\n");
+        Utils::Print("GetKeySettings() failed\r\n");
         return false;
     }
 
@@ -1483,7 +1476,7 @@ bool Desfire::Selftest()
         !SelftestKeyChange(u32_AppAES,    &AES_DEFAULT_KEY, &i_AesKeyA,  &i_AesKeyB))
         return false;
 
-    SER.print("--------------------------------------------------------------\r\n");
+    Utils::Print("--------------------------------------------------------------\r\n");
 
     const int FILE_LENGTH = 80; // this exceeds the frame size -> requires two frames for write / read    
 
@@ -1504,7 +1497,7 @@ bool Desfire::Selftest()
 
     if (u8_FileCount != 1 || u8_FileIDs[0] != 5)
     {
-        SER.print("GetFileIDs() failed\r\n");
+        Utils::Print("GetFileIDs() failed\r\n");
         return false;
     }
 
@@ -1518,7 +1511,7 @@ bool Desfire::Selftest()
         k_Settings.k_Permis.Pack() != k_Permis.Pack() ||
         k_Settings.u32_FileSize    != FILE_LENGTH)
     {
-        SER.print("GetFileSettings() failed\r\n");
+        Utils::Print("GetFileSettings() failed\r\n");
         return false;
     }
 
@@ -1541,7 +1534,7 @@ bool Desfire::Selftest()
 
     if (memcmp(u8_TxData, u8_RxData, FILE_LENGTH) != 0)
     {
-        SER.print("Read/Write file failed\r\n");
+        Utils::Print("Read/Write file failed\r\n");
         return false;
     }
 
@@ -1555,7 +1548,7 @@ bool Desfire::Selftest()
 
     if (u8_FileCount != 0)
     {
-        SER.print("DeleteFile() failed\r\n");
+        Utils::Print("DeleteFile() failed\r\n");
         return false;
     }
 
@@ -1581,7 +1574,7 @@ bool Desfire::Selftest()
 // If there should be any bug in ChangeKey() the consequence may be a card that you cannot authenticate anymore!
 bool Desfire::SelftestKeyChange(uint32_t u32_Application, DESFireKey* pi_DefaultKey, DESFireKey* pi_NewKeyA, DESFireKey* pi_NewKeyB)
 { 
-    SER.print("--------------------------------------------------------------\r\n");
+    Utils::Print("--------------------------------------------------------------\r\n");
   
     // Never change the PICC master key in the Selftest!
     if (u32_Application == 0x000000)
@@ -1625,7 +1618,7 @@ bool Desfire::SelftestKeyChange(uint32_t u32_Application, DESFireKey* pi_Default
 
     if (e_Settg != 0x0D || u8_KeyCount != 2 || e_KeyType != pi_NewKeyA->GetKeyType())
     {
-        SER.print("ChangeKeySettings() failed\r\n");
+        Utils::Print("ChangeKeySettings() failed\r\n");
         return false;
     }                
 
@@ -1651,7 +1644,7 @@ bool Desfire::SelftestKeyChange(uint32_t u32_Application, DESFireKey* pi_Default
 
     if (u8_KeyVersion != CARD_KEY_VERSION)
     {
-        SER.print("GetKeyVersion() failed\r\n");
+        Utils::Print("GetKeyVersion() failed\r\n");
         return false;
     }
 

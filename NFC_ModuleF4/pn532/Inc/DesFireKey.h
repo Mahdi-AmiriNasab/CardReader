@@ -13,8 +13,6 @@
 #define DESFIRE_KEY_H
 
 #include "Buffer.h"
-#include "PN532.h"
-extern DBG SER;
 
 enum DESFireCipher
 {
@@ -67,7 +65,7 @@ public:
         if (s32_ByteCount < ms32_BlockSize ||
             s32_ByteCount % ms32_BlockSize)
         {
-            SER.print("Invalid CBC block size\r\n");  
+            Utils::Print("Invalid CBC block size\r\n");  
             return false;
         }
       
@@ -157,7 +155,6 @@ public:
     // The Desfire card detects automatically that this 16 byte key is really a simple 8 byte DES key.
     inline int GetKeySize(int s32_MinSize=0) 
     { 
-	
         return max(s32_MinSize, ms32_KeySize); 
     }   
 
@@ -187,14 +184,14 @@ public:
     // just for debugging
     inline void PrintIV(const char* s8_LF=NULL)
     {
-        SER.printHexBuf(mu8_IV, ms32_BlockSize, s8_LF);
+        Utils::PrintHexBuf(mu8_IV, ms32_BlockSize, s8_LF);
     }
 
     static bool CheckValid(DESFireKey* pi_Key)
     {
         if (pi_Key == NULL || pi_Key->GetKeyType() == DF_KEY_INVALID)
         {
-            SER.print("Invalid key\r\n");
+            Utils::Print("Invalid key\r\n");
             return false;
         }
         return true;
@@ -215,11 +212,11 @@ public:
     {
         // Even if an 8 byte simple DES key is used, the function ChangeKey() works internally always with 16 bytes.
         // For a simple DES key 16 byte will be printed where the first half is idententical to the second half.
-        SER.printHexBuf(mu8_Key, GetKeySize(16));
+        Utils::PrintHexBuf(mu8_Key, GetKeySize(16));
 
-        SER.print(" (");
-        SER.print(GetKeyTypeAsString(me_KeyType, ms32_KeySize));
-        SER.print(")", s8_LF);
+        Utils::Print(" (");
+        Utils::Print(GetKeyTypeAsString(me_KeyType, ms32_KeySize));
+        Utils::Print(")", s8_LF);
     }
 
     static const char* GetKeyTypeAsString(DESFireKeyType e_KeyType, int s32_KeySize=0)

@@ -22,7 +22,8 @@ extern "C" {
 #define handle_uart  		huart2
 #define reset_pin 			PC6 
 #define irq_pin     		PC5 
-
+//#define DBG            		SerialClass 
+//#define print					Print
 
 //extern structures
 extern I2C_HandleTypeDef handle_i2c;
@@ -32,29 +33,19 @@ typedef  uint8_t byte;
 
 	
 	
-// Classes 
-class DBG
-{
-	public:
-		void print (const char* s8_Text, const char* s8_LF);
-		bool available(void);
-		byte read(void);
-		void print (const char *str);
-		void printDec(int s32_Data, const char* s8_LF);
-		void printHex8(byte u8_Data, const char* s8_LF);
-		void printHex16(uint16_t u16_Data, const char* s8_LF);
-		void println (const char *str);
-		void printHex32(uint32_t u32_Data, const char* s8_LF);
-		void println (void);
-		void printHexBuf(const byte* u8_Data, const uint32_t u32_DataLen, const char* s8_LF, int s32_Brace1, int s32_Brace2);
-		void printInterval(uint64_t u64_Time, const char* s8_LF);
 
-	private:
-};
-
-
-
-
+//		void print (const char* s8_Text, const char* s8_LF);
+//		bool available(void);
+//		byte read(void);
+//		void print (const char *str);
+//		void printDec(int s32_Data, const char* s8_LF);
+//		void printHex8(byte u8_Data, const char* s8_LF);
+//		void printHex16(uint16_t u16_Data, const char* s8_LF);
+//		void println (const char *str);
+//		void printHex32(uint32_t u32_Data, const char* s8_LF);
+//		void println (void);
+//		void printHexBuf(const byte* u8_Data, const uint32_t u32_DataLen, const char* s8_LF = 0, int s32_Brace1 = 0, int s32_Brace2 = 0);
+//		void printInterval(uint64_t u64_Time, const char* s8_LF);
 
 
 /**********Inline Classes*************/
@@ -62,96 +53,101 @@ class DBG
 //    inline void DBG::print (const uint8_t *str, const uint8_t  type)
 //    {}
 
-inline void DBG::print (const char *str)
-{
-	HAL_UART_Transmit(&handle_uart,(uint8_t *)str ,strlen((const char *)str), 100);  
-}        
-inline void DBG::print (const char* s8_Text, const char* s8_LF) //=NULL
-{
-	DBG::print(s8_Text);
-	if (s8_LF) 
-		DBG::print(s8_LF);
-}
-inline void DBG::printDec(int s32_Data, const char* s8_LF = 0) // =NULL
-{
-    char s8_Buf[20];
-    sprintf(s8_Buf, "%d", s32_Data);
-    print(s8_Buf, s8_LF);
-}
-inline void DBG::printHex8(byte u8_Data, const char* s8_LF = 0) // =NULL
-{
-    char s8_Buf[20];
-    sprintf(s8_Buf, "%02X", u8_Data);
-    print(s8_Buf, s8_LF);
-}
-inline void DBG::printHex16(uint16_t u16_Data, const char* s8_LF = 0) // =NULL
-{
-    char s8_Buf[20];
-    sprintf(s8_Buf, "%04X", u16_Data);
-    print(s8_Buf, s8_LF);
-}
-inline void DBG::printHex32(uint32_t u32_Data, const char* s8_LF = 0) // =NULL
-{
-    char s8_Buf[20];
-    sprintf(s8_Buf, "%08X", (unsigned int)u32_Data);
-    print(s8_Buf, s8_LF);
-}
-
-// Prints a hexadecimal buffer as 2 digit HEX numbers
-// At the byte position s32_Brace1 a "<" will be inserted
-// At the byte position s32_Brace2 a ">" will be inserted
-// Output will look like: "00 00 FF 03 FD <D5 4B 00> E0 00"
-// This is used to mark the data bytes in the packet.
-// If the parameters s32_Brace1, s32_Brace2 are -1, they do not appear
-inline void DBG::printHexBuf(const byte* u8_Data, const uint32_t u32_DataLen, const char* s8_LF = 0, int s32_Brace1 = 0, int s32_Brace2 = 0)
-{
-	if (s32_Brace2 == 0)
-		s32_Brace2  = u32_DataLen;
-    for (uint32_t i=0; i < u32_DataLen; i++)
-    {
-        if ((int)i == s32_Brace1)
-            print(" <");
-        else if ((int)i == s32_Brace2)
-            print("> ");
-        else if (i > 0)
-            print(" ");
-        
-        printHex8(u8_Data[i]);
-    }
-    if (s8_LF) print(s8_LF);
-}
-
-// Converts an interval in milliseconds into days, hours, minutes and prints it
-inline void DBG::printInterval(uint64_t u64_Time, const char* s8_LF)
-{
-    char Buf[30];
-    u64_Time /= 60*1000;
-    int s32_Min  = (int)(u64_Time % 60);
-    u64_Time /= 60;
-    int s32_Hour = (int)(u64_Time % 24);    
-    u64_Time /= 24;
-    int s32_Days = (int)u64_Time;    
-    sprintf(Buf, "%d days, %02d:%02d hours", s32_Days, s32_Hour, s32_Min);
-    print(Buf, s8_LF);   
-}
-inline void DBG::println(const char *str)
-{
-	HAL_UART_Transmit(&handle_uart,(uint8_t *)str ,strlen((const char *)str), 100); 
-	HAL_UART_Transmit(&handle_uart,(uint8_t*)"\n" ,1, 100); 
-}
-inline bool DBG::available(void)
-{
-	return __HAL_UART_GET_FLAG(&handle_uart, UART_FLAG_RXNE);
-}
-
-inline byte DBG::read(void)
-{
-	uint8_t read_tmp = 0;
-	HAL_UART_Receive(&handle_uart, &read_tmp ,1 , 100);
-	return read_tmp;
-}
 
 
+class DBG
+{
+	public:	
+	inline void print (const char *str)
+	{
+		HAL_UART_Transmit(&handle_uart,(uint8_t *)str ,strlen((const char *)str), 100);  
+	}        
+	inline void print (const char* s8_Text, const char* s8_LF) //=NULL
+	{
+		DBG::print(s8_Text);
+		if (s8_LF) 
+			DBG::print(s8_LF);
+	}
+	inline void printDec(int s32_Data, const char* s8_LF = 0) // =NULL
+	{
+		char s8_Buf[20];
+		sprintf(s8_Buf, "%d", s32_Data);
+		print(s8_Buf, s8_LF);
+	}
+	inline void printHex8(byte u8_Data, const char* s8_LF = 0) // =NULL
+	{
+		char s8_Buf[20];
+		sprintf(s8_Buf, "%02X", u8_Data);
+		print(s8_Buf, s8_LF);
+	}
+	inline void printHex16(uint16_t u16_Data, const char* s8_LF = 0) // =NULL
+	{
+		char s8_Buf[20];
+		sprintf(s8_Buf, "%04X", u16_Data);
+		print(s8_Buf, s8_LF);
+	}
+	inline void printHex32(uint32_t u32_Data, const char* s8_LF = 0) // =NULL
+	{
+		char s8_Buf[20];
+		sprintf(s8_Buf, "%08X", (unsigned int)u32_Data);
+		print(s8_Buf, s8_LF);
+	}
+
+	// Prints a hexadecimal buffer as 2 digit HEX numbers
+	// At the byte position s32_Brace1 a "<" will be inserted
+	// At the byte position s32_Brace2 a ">" will be inserted
+	// Output will look like: "00 00 FF 03 FD <D5 4B 00> E0 00"
+	// This is used to mark the data bytes in the packet.
+	// If the parameters s32_Brace1, s32_Brace2 are -1, they do not appear
+	inline void printHexBuf(const byte* u8_Data, const uint32_t u32_DataLen, const char* s8_LF = 0, int s32_Brace1 = 0, int s32_Brace2 = 0)
+	{
+		if (s32_Brace2 == 0)
+			s32_Brace2  = u32_DataLen;
+		for (uint32_t i=0; i < u32_DataLen; i++)
+		{
+			if ((int)i == s32_Brace1)
+				print(" <");
+			else if ((int)i == s32_Brace2)
+				print("> ");
+			else if (i > 0)
+				print(" ");
+			
+			printHex8(u8_Data[i]);
+		}
+		if (s8_LF) print(s8_LF);
+	}
+
+	// Converts an interval in milliseconds into days, hours, minutes and prints it
+	inline void printInterval(uint64_t u64_Time, const char* s8_LF)
+	{
+		char Buf[30];
+		u64_Time /= 60*1000;
+		int s32_Min  = (int)(u64_Time % 60);
+		u64_Time /= 60;
+		int s32_Hour = (int)(u64_Time % 24);    
+		u64_Time /= 24;
+		int s32_Days = (int)u64_Time;    
+		sprintf(Buf, "%d days, %02d:%02d hours", s32_Days, s32_Hour, s32_Min);
+		print(Buf, s8_LF);   
+	}
+	inline void println(const char *str)
+	{
+		HAL_UART_Transmit(&handle_uart,(uint8_t *)str ,strlen((const char *)str), 100); 
+		HAL_UART_Transmit(&handle_uart,(uint8_t*)"\n" ,1, 100); 
+	}
+	inline bool available(void)
+	{
+		return __HAL_UART_GET_FLAG(&handle_uart, UART_FLAG_RXNE);
+	}
+
+	inline byte read(void)
+	{
+		uint8_t read_tmp = 0;
+		HAL_UART_Receive(&handle_uart, &read_tmp ,1 , 100);
+		return read_tmp;
+	}
+	private:
+};
 
 
 #ifndef CPU_Freq_MHZ 
@@ -270,8 +266,10 @@ enum PinNumber
 
 typedef enum 
 {
-    HIGH =  1,
-    LOW =   0, 
+    HIGH 	= 1,
+    LOW 	= 0,
+	OUTPUT 	= 3,
+	INPUT 	= 4 
 }PS;
 
 
