@@ -11,6 +11,7 @@
 #include "PN532.h"
 #include "stdio.h"
 #include "UserManager.h"
+#include "Classic.h"
 //#include "Adafruit_PN532.h"
 
 /* USER CODE END Includes */
@@ -655,10 +656,14 @@ int main(void)
 	typedef enum 
 	{
 		WRITE,
-		READ
+		READ,
+		CHANGE_KEY,
+		MIFARE_WRITE,
+		MIFARE_READ
 	}Phase;
 	
-	Phase RW_phase;
+	Phase COMMAND;
+	
 	rfid.begin(); 
 	
 	LED_Blink(green_port, green_pin, 10);
@@ -700,9 +705,11 @@ int main(void)
 	DESFireKeySettings KeySettings;
 	DESFireFileSettings FileSetting;
 	DESFireKeyType KeyType;
+	eCardType CardType;
 	
 
 	DESFIRE_KEY_TYPE i_AppMasterKey;
+	Classic mifare;
 
 	// Create Standard Data File with 16 bytes length
 	DESFireFilePermissions k_Permis;
@@ -717,16 +724,34 @@ int main(void)
 		
 		Utils::Print("Type W to start write process",LF);
 		Utils::Print("Type R to start read process",LF);
+		Utils::Print("Type C to change master key",LF);
+		Utils::Print("Type D to read mifare card block number 4",LF);
+		Utils::Print("Type E to Write mifare card block number 4 some credit",LF);
 		while(!SerialClass::Available()); // wait for a character
 		char char_in = SerialClass::Read ();
 		if((char_in == 'W') || (char_in == 'w'))
 		{
-			RW_phase = WRITE;
+			COMMAND = WRITE;
 			flag_OK = 1;
 		}
 		else if((char_in == 'R') || (char_in == 'r'))
 		{
-			RW_phase = READ;
+			COMMAND = READ;
+			flag_OK = 1;
+		}
+		else if ((char_in == 'C') || (char_in == 'c'))
+		{
+			COMMAND = CHANGE_KEY;
+			flag_OK = 1;
+		}
+		else if ((char_in == 'D') || (char_in == 'd'))
+		{
+			COMMAND = MIFARE_READ;
+			flag_OK = 1;
+		}
+		else if ((char_in == 'E') || (char_in == 'e'))
+		{
+			COMMAND = MIFARE_WRITE;
 			flag_OK = 1;
 		}
 		else
@@ -736,14 +761,15 @@ int main(void)
 		}
 	}while(!flag_OK);
 	
+	
 //	HAL_Delay(1000);
 	
 //	if (HAL_GPIO_ReadPin(Button_Blue_GPIO_Port, Button_Blue_Pin))
-//		RW_phase = WRITE;
+//		COMMAND = WRITE;
 //	else
-//		RW_phase = READ;
+//		COMMAND = READ;
 	char buff[50];
-	sprintf(buff, "Selected process is : %s\r\n", (RW_phase & 1) ? "READ": "WRITE");
+	sprintf(buff, "Selected process is : %s\r\n", (COMMAND & 1) ? "READ": "WRITE");
 	Utils::Print(buff);
 	
 //	HAL_Delay(1000);
@@ -751,7 +777,7 @@ int main(void)
 //	
 //	while(!HAL_GPIO_ReadPin(Button_Blue_GPIO_Port, Button_Blue_Pin));
 //	HAL_Delay(1000);
-	while(RW_phase == WRITE)
+	while(COMMAND == WRITE)
 	{
 	/* USER CODE END WHILE */
 	/* USER CODE BEGIN 3 */
@@ -765,13 +791,6 @@ int main(void)
 			
 			Utils::Print("Copping original data\nData is(HEX):",LF);
 			Utils::Print((const char *)encrypted_data_pre, LF);
-			
-//			Desfire My_Desfire;
-//			if (!My_Desfire.DES2_DEFAULT_KEY.CryptDataBlock(encrypted_data_pre, SELECT_USER,  KEY_ENCIPHER) )
-//				break;
-//			
-//			Utils::Print("Encrypted data is(HEX):");
-//			Utils::PrintHexBuf(encrypted_data_pre, FileSize, LF);
 
 			if (AuthenticatePICC(&k_Card.u8_KeyVersion))
 				do
@@ -854,7 +873,7 @@ int main(void)
 		
 
 	}	
-	while(RW_phase == READ)
+	while(COMMAND == READ)
 	{
 		Utils::Print("Reading the card" ,LF);
 		
@@ -870,7 +889,7 @@ int main(void)
 					//if (!rfid.Authenticate(0, &DEFAULT_APP_KEY))
 					if (!rfid.Authenticate(0, &rfid.DES2_DEFAULT_KEY))
 						break;   
-					 if (!rfid.GetFileIDs(file_id, &file_count))
+					if (!rfid.GetFileIDs(file_id, &file_count))
 						break;
 					if (file_count != 1 || file_id[0] != 0)
 						Utils::Print("GetFileIDs() failed\r\n");
@@ -886,30 +905,6 @@ int main(void)
 					Utils::PrintHexBuf(read_card_buffer,FileSize ,LF);
 					sprintf(buff,"File size is: %d", FileSize);
 					Utils::Print(buff,LF);
-					
-//					byte encrypted_data[FileSize];
-//					memcpy(encrypted_data, SELECT_USER, FileSize);
-//					if (!GenerateDesfireSecrets(&k_User, &rfid.DES2_DEFAULT_KEY, encrypted_data))
-//						break;
-//					if(memcmp(encrypted_data, SELECT_USER, FileSize) == 0)
-//						Utils::Print("Data is the same", LF);
-//					else
-//						Utils::Print("<<Data is NOT the same>>", LF);
-//				
-
-//					// ##################################################
-//					// Testing encryption and decryption
-//					// ##################################################
-//					Desfire i_Desfire;
-//					byte u8_Decrypt[FileSize] = {0};
-
-//					if (!i_Desfire.DES2_DEFAULT_KEY.CryptDataBlock(u8_Decrypt, read_card_buffer, KEY_DECIPHER))
-//						break;
-//					
-//					Utils::Print("Decrypted data is:");
-//					Utils::Print((const char *)u8_Decrypt, LF);
-//					Utils::Print("Decrypted ata in HEX:", LF);
-//					Utils::PrintHexBuf(u8_Decrypt,FileSize ,LF);
 				
 					Utils::Print("Read SUCCESSFULLY",LF);	
 					LED_Blink(green_port, green_pin, Delay_Blink);
@@ -925,6 +920,129 @@ int main(void)
 		}
 		break;
 		
+	}
+	while(COMMAND == CHANGE_KEY)
+	{
+		Utils::Print("Changing the master key" ,LF);
+		 DESFIRE_KEY_TYPE  new_key_class;
+		const byte new_key_array [9] = "01234567";
+		// If the key is an AES key only the first 16 bytes will be used
+		if (!new_key_class.SetKeyData(new_key_array, 8 , CARD_KEY_VERSION))
+			break;
+		sprintf(buff,"new key is: %s", new_key_array);
+		Utils::Print(buff, LF);
+		
+		if (ReadCard(k_User.ID.u8, &k_Card) && k_Card.u8_UidLength > 4)
+		{
+			if(AuthenticatePICC(&k_Card.u8_KeyVersion))
+				do 
+				{
+					// Change the master key of the application
+					if (!rfid.ChangeKey(0, &new_key_class, NULL))
+						break;
+	
+					// A key change always requires a new authentication with the new key
+					if (!rfid.Authenticate(0, &new_key_class))
+						break;
+
+					Utils::Print("Changing the master key SUCCESSFULLY",LF);	
+					LED_Blink(green_port, green_pin, Delay_Blink);
+					flag_OK = 1;
+				}while(0);
+				
+			if(!flag_OK)
+			{
+				Utils::Print("Changing the master key FAILED",LF);	
+				LED_Blink(red_port, red_pin, Delay_Blink);
+				flag_OK = 0;	
+			}
+		}
+		break;
+	}
+			
+	while(COMMAND == MIFARE_READ)
+	{
+		
+		if (!mifare.ReadPassiveTargetID(uid_buffer, &uid_length, &CardType))
+			break;
+
+		if (uid_length == 0)
+		{
+			//Utils::Print("No card present.\r\n");
+			break;
+		}
+		else if (uid_length == 7)
+		{
+			Utils::Print("DESFire card not allowded in this command.\r\n");
+		}
+		else if (uid_length == 4)
+		{
+			Utils::Print("mifare classic card detected.\r\n");
+		}
+
+		byte readout_data[20];
+		
+		// Authorizing the first block of a sector is enough (1 sector = 4 blocks)
+		const uint8_t K[] = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
+		if(!mifare.AuthenticateDataBlock(4, 'A', K, uid_buffer, uid_length))
+		{
+			Utils::Print("block 4 authentication failed",LF);
+			break;
+		}
+		else
+		{
+			Utils::Print("block 4 authentication successful",LF);
+		}
+		
+		if (mifare.ReadDataBlock(4, readout_data))
+        {
+            Utils::Print("Data block 4 is(HEX):");
+			Utils::PrintHexBuf(readout_data, 16);
+		}
+		
+		break;
+	}
+	
+	while(COMMAND == MIFARE_WRITE)
+	{
+		if (!mifare.ReadPassiveTargetID(uid_buffer, &uid_length, &CardType))
+			break;
+
+		if (uid_length == 0)
+		{
+			//Utils::Print("No card present.\r\n");
+			break;
+		}
+		else if (uid_length == 7)
+		{
+			Utils::Print("DESFire card not allowded in this command.\r\n");
+		}
+		else if (uid_length == 4)
+		{
+			Utils::Print("mifare classic card detected.\r\n");
+		}
+
+		
+		// Authorizing the first block of a sector is enough (1 sector = 4 blocks)
+		const uint8_t K[] = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
+		if(!mifare.AuthenticateDataBlock(4, 'A', K, uid_buffer, uid_length))
+		{
+			Utils::Print("block 4 authentication failed",LF);
+			break;
+		}
+		else
+		{
+			Utils::Print("block 4 authentication successful",LF);
+		}
+		
+		byte writein_data[20] = {0xFF, 0xA0};
+		if(mifare.WriteDataBlock(4, writein_data))
+			Utils::Print("Writing successful");
+		else
+			Utils::Print("Writing Failed");
+		
+			
+		break;
 	}
 	rfid.PowerDown();
 	Utils::Print("Program has terminated. reset the chip", LF);

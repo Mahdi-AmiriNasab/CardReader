@@ -433,6 +433,11 @@
               <FileType>8</FileType>
               <FilePath>..\Src\DES.cpp</FilePath>
             </File>
+            <File>
+              <FileName>Classic.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\Src\Classic.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
